@@ -6,7 +6,7 @@
 
 namespace
 {
-	bool StartsWith(const std::string& str, const std::string& smallString)
+	bool StartsWith(const std::string &str, const std::string &smallString)
 	{
 		if (str.size() < smallString.size())
 			return false;
@@ -18,7 +18,7 @@ namespace
 		return true;
 	}
 
-	std::string GetAfterChar(const std::string& str, char c)
+	std::string GetAfterChar(const std::string &str, char c)
 	{
 		for (size_t i = 0; i < str.size(); ++i)
 			if (str[i] == c)
@@ -27,7 +27,7 @@ namespace
 		return "";
 	}
 
-	std::vector<std::string> Split(const std::string& str, char c)
+	std::vector<std::string> Split(const std::string &str, char c)
 	{
 		std::vector<std::string> list;
 
@@ -67,22 +67,21 @@ namespace
 	}
 }
 
-Font::Character::Character() { }
+Font::Character::Character() {}
 
-Font::Character::Character(const FVector4& texCoords, const FVector2& quadSize, const FVector2& offsetFromCursor, float cursorXAdvance) :
-	texCoords(texCoords),
-	quadSize(quadSize),
-	offsetFromCursor(offsetFromCursor),
-	cursorXAdvance(cursorXAdvance)
-{ }
+Font::Character::Character(const FVector4 &texCoords, const FVector2 &quadSize, const FVector2 &offsetFromCursor, float cursorXAdvance) : texCoords(texCoords),
+																																		  quadSize(quadSize),
+																																		  offsetFromCursor(offsetFromCursor),
+																																		  cursorXAdvance(cursorXAdvance)
+{
+}
 
-Font::Font(const std::string& directory) :
-	directory(directory)
+Font::Font(const std::string &directory) : directory(directory)
 {
 	for (size_t i = 0; i < (INT8_MAX + 1) * (INT8_MAX + 1); ++i)
 		kerningMatrix[i] = 0.0F;
 
-	bool initRecord[INT8_MAX + 1] = { false };
+	bool initRecord[INT8_MAX + 1] = {false};
 
 	FVector4 baseTexCoords = Internal::Storage::GameObjects2::texture.GetTexInfo(directory);
 	float sizePx = 0.0F;
@@ -129,18 +128,14 @@ Font::Font(const std::string& directory) :
 						baseTexCoords.x + (xPx / texWidthPx) * baseTexCoords.z,
 						baseTexCoords.y + (1.0F - (yPx / texHeightPx) - (heightPx / texHeightPx)) * baseTexCoords.w,
 						(widthPx / texWidthPx) * baseTexCoords.z,
-						(heightPx / texHeightPx) * baseTexCoords.w
-					),
+						(heightPx / texHeightPx) * baseTexCoords.w),
 					FVector2(
 						widthPx / sizePx,
-						heightPx / sizePx
-					),
+						heightPx / sizePx),
 					FVector2(
 						offsetFromCursorXPx / sizePx * 2.0F,
-						-offsetFromCursorYPx / sizePx * 2.0F
-					),
-					cursorXAdvancePx / sizePx * 2.0F
-				);
+						-offsetFromCursorYPx / sizePx * 2.0F),
+					cursorXAdvancePx / sizePx * 2.0F);
 			}
 			else if (StartsWith(line, "info"))
 			{
@@ -165,9 +160,9 @@ Font::Font(const std::string& directory) :
 			characters[i] = characters[127];
 }
 
-TextRenderComponent2::MySpecialState::MySpecialState(TextRenderComponent2* component) :
-	component(component)
-{ }
+TextRenderComponent2::MySpecialState::MySpecialState(TextRenderComponent2 *component) : component(component)
+{
+}
 
 void TextRenderComponent2::MySpecialState::GPUStart()
 {
@@ -186,40 +181,48 @@ void TextRenderComponent2::MySpecialState::GPUStop()
 	Internal::Storage::GameObjects2::shader.Bind();
 }
 
-TextRenderComponent2::TextRenderComponent2(Font* font, int characterSize, const std::string& str) :
-	RenderComponent2(font->directory, FColor::BLACK),
-	font(font),
-	characterSize(characterSize),
-	str(str),
-	widthDist(0.4F),
-	edgeDist(0.4F),
-	borderWidthDist(0.0F),
-	borderEdgeDist(0.0F),
-	borderColor(0.0F, 0.0F, 0.0F, 0.0F),
-	specialState(this),
-	vertices(nullptr),
-	texCoords(nullptr),
-	colors(nullptr)
+TextRenderComponent2::TextRenderComponent2(Font *font, int characterSize, const std::string &str) : RenderComponent2(font->directory, FColor::BLACK),
+																									font(font),
+																									characterSize(characterSize),
+																									str(str),
+																									widthDist(0.4F),
+																									edgeDist(0.4F),
+																									borderWidthDist(0.0F),
+																									borderEdgeDist(0.0F),
+																									borderColor(0.0F, 0.0F, 0.0F, 0.0F),
+																									specialState(this),
+																									vertices(nullptr),
+																									texCoords(nullptr),
+																									colors(nullptr),
+																									lastBounds(1.0F),
+																									cursorPos(-1),
+																									lastCursorPos(-1),
+																									cursorColor(FColor::WHITE),
+																									lastCursorColor(FColor::WHITE)
 {
 	quadCount = 0;
 
 	charParentTransform = Transform2(FVector2(-1.0F, 1.0F)).WithConstraints(nullptr, nullptr, std::shared_ptr<ScaleConstraint>(new CenterScaleConstraint(static_cast<float>(characterSize))), std::shared_ptr<ScaleConstraint>(new CenterScaleConstraint(static_cast<float>(characterSize))));
 }
 
-TextRenderComponent2::TextRenderComponent2(const TextRenderComponent2& other) :
-	RenderComponent2(other),
-	font(other.font),
-	characterSize(other.characterSize),
-	str(other.str),
-	widthDist(0.4F),
-	edgeDist(0.4F),
-	borderWidthDist(0.0F),
-	borderEdgeDist(0.0F),
-	borderColor(0.0F, 0.0F, 0.0F, 0.0F),
-	specialState(this),
-	vertices(nullptr),
-	texCoords(nullptr),
-	colors(nullptr)
+TextRenderComponent2::TextRenderComponent2(const TextRenderComponent2 &other) : RenderComponent2(other),
+																				font(other.font),
+																				characterSize(other.characterSize),
+																				str(other.str),
+																				widthDist(0.4F),
+																				edgeDist(0.4F),
+																				borderWidthDist(0.0F),
+																				borderEdgeDist(0.0F),
+																				borderColor(0.0F, 0.0F, 0.0F, 0.0F),
+																				specialState(this),
+																				vertices(nullptr),
+																				texCoords(nullptr),
+																				colors(nullptr),
+																				lastBounds(1.0F),
+																				cursorPos(other.cursorPos),
+																				lastCursorPos(other.lastCursorPos),
+																				cursorColor(other.cursorColor),
+																				lastCursorColor(other.lastCursorColor)
 {
 	quadCount = 0;
 
@@ -252,10 +255,12 @@ void TextRenderComponent2::SetCharacterSize(int characterSize)
 	SetText(str, true);
 }
 
-void TextRenderComponent2::SetText(const std::string& str, bool force)
+void TextRenderComponent2::SetText(const std::string &str, bool force)
 {
-	if (!force && this->str == str)
+	if (!force && this->str == str && cursorPos == lastCursorPos && cursorColor == lastCursorColor)
 		return;
+	lastCursorPos = cursorPos;
+	lastCursorColor = cursorColor;
 
 	this->str = str;
 
@@ -274,13 +279,13 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 		float yOffset;
 		FColor color;
 
-		State() :
-			fontSize(1.0F),
-			yOffset(0.0F),
-			color(FColor::BLACK)
-		{ }
+		State() : fontSize(1.0F),
+				  yOffset(0.0F),
+				  color(FColor::BLACK)
+		{
+		}
 
-		bool operator!=(const State& other)
+		bool operator!=(const State &other)
 		{
 			return fontSize != other.fontSize || yOffset != other.yOffset || color != other.color;
 		}
@@ -290,19 +295,40 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 	{
 		struct Segment
 		{
+			struct Image
+			{
+			public:
+				// The char ID coming after this
+				int succeedingChar;
+				// Horizontal relative size to vertical
+				float size;
+				FVector4 texCoords;
+				FColor color;
+				bool drawn;
+
+				Image(int succeedingChar, float size, const FVector4 &texCoords, const FColor &color) : succeedingChar(succeedingChar),
+																										size(size),
+																										texCoords(texCoords),
+																										color(color),
+																										drawn(false)
+				{
+				}
+			};
+
 			State state;
 			float startCursorPos;
 			float localLength;
 			std::string value;
+			std::vector<Image> images;
 
-			Segment() { }
+			Segment() {}
 
-			Segment(const State& state, float startCursorPos) :
-				state(state),
-				startCursorPos(startCursorPos),
-				localLength(startCursorPos),
-				value("")
-			{ }
+			Segment(const State &state, float startCursorPos) : state(state),
+																startCursorPos(startCursorPos),
+																localLength(startCursorPos),
+																value("")
+			{
+			}
 		};
 
 		std::vector<Segment> segments;
@@ -310,17 +336,16 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 		size_t index;
 		float yStart;
 
-		Line() { }
+		Line() {}
 
-		Line(size_t index, const State& state, float yStart) :
-			longestLength(0.0F),
-			index(index),
-			yStart(yStart)
+		Line(size_t index, const State &state, float yStart) : longestLength(0.0F),
+															   index(index),
+															   yStart(yStart)
 		{
 			segments.push_back(Segment(state, 0.0F));
 		}
 
-		Segment& GetSeg()
+		Segment &GetSeg()
 		{
 			return segments[segments.size() - 1];
 		}
@@ -331,14 +356,15 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 		State state;
 		std::string value;
 		float length;
+		std::vector<Line::Segment::Image> images;
 
-		WordSegment() { }
+		WordSegment() {}
 
-		WordSegment(const State& state) :
-			state(state),
-			value(""),
-			length(0.0F)
-		{ }
+		WordSegment(const State &state) : state(state),
+										  value(""),
+										  length(0.0F)
+		{
+		}
 	};
 
 	struct SavedPos
@@ -346,17 +372,17 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 		float cursorPos;
 		size_t line;
 
-		SavedPos() { }
+		SavedPos() {}
 
-		SavedPos(float cursorPos, size_t line) :
-			cursorPos(cursorPos),
-			line(line)
-		{ }
+		SavedPos(float cursorPos, size_t line) : cursorPos(cursorPos),
+												 line(line)
+		{
+		}
 	};
 
 	std::vector<Line> lines;
 
-	const FMatrix3x3& transform = gameObject->transform.GetMatrix();
+	const FMatrix3x3 &transform = gameObject->transform.GetMatrix();
 
 	FVector3 centerPos = transform * FVector3(0.0F, 0.0F, 1.0F);
 	FVector3 edgePos = transform * FVector3(1.0F, 1.0F, 1.0F);
@@ -376,15 +402,65 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 	float currentWordTerminatingSpaceLength = 0.0F;
 	float lastWordTerminatingSpaceLength = 0.0F;
 	lines.push_back(Line(0, currentState, 0.0F));
-	Line* currentLine = &lines[0];
+	Line *currentLine = &lines[0];
 
-#define add_word_char(c,l) currentWord[currentWord.size() - 1].value += c; currentWord[currentWord.size() - 1].length += l; currentTotalWordLength += l
-#define clear_word_value currentWord.clear(); currentWord.push_back(WordSegment(currentState)); currentTotalWordLength = 0.0F;
-#define add_current_word_to_current_line for (const auto& seg : currentWord) { if (currentLine->GetSeg().state != seg.state) currentLine->segments.push_back(Line::Segment(seg.state, currentLine->GetSeg().localLength)); currentLine->GetSeg().value += seg.value; currentLine->GetSeg().localLength += seg.length; if (currentLine->GetSeg().localLength > currentLine->longestLength) currentLine->longestLength = currentLine->GetSeg().localLength; }
-#define attempt_to_add_current_line { if (currentLine->index == lines.size() - 1) { float upperBounding = -10e10F; float lowerBounding = 10e10F; for (const auto& seg : currentLine->segments) { if (seg.localLength - seg.startCursorPos == 0.0F) continue; if (-(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset > upperBounding) upperBounding = -(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset; if (-(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset - seg.state.fontSize * 2.0F < lowerBounding) lowerBounding = -(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset - seg.state.fontSize * 2.0F; } currentLine->yStart -= upperBounding; float cursorYAdvance = -font->cursorYAdvance + lowerBounding + 2.0F; if (currentLine->yStart + cursorYAdvance < boundingYVal) { lines.pop_back(); currentLine = nullptr; goto no_more_lines; } lines.push_back(Line(lines.size(), currentState, currentLine->yStart + cursorYAdvance)); currentLine = &lines[lines.size() - 1]; } else { currentLine = &lines[currentLine->index + 1]; } }
+#define add_word_char(c, l)                          \
+	currentWord[currentWord.size() - 1].value += c;  \
+	currentWord[currentWord.size() - 1].length += l; \
+	currentTotalWordLength += l
+#define clear_word_value                              \
+	currentWord.clear();                              \
+	currentWord.push_back(WordSegment(currentState)); \
+	currentTotalWordLength = 0.0F;
+#define add_current_word_to_current_line                                                                                                                               \
+	for (const auto &seg : currentWord)                                                                                                                                \
+	{                                                                                                                                                                  \
+		if (currentLine->GetSeg().state != seg.state)                                                                                                                  \
+			currentLine->segments.push_back(Line::Segment(seg.state, currentLine->GetSeg().localLength));                                                              \
+		for (const Line::Segment::Image &img : seg.images)                                                                                                             \
+			currentLine->GetSeg().images.push_back(Line::Segment::Image(img.succeedingChar + currentLine->GetSeg().value.size(), img.size, img.texCoords, img.color)); \
+		currentLine->GetSeg().value += seg.value;                                                                                                                      \
+		currentLine->GetSeg().localLength += seg.length;                                                                                                               \
+		if (currentLine->GetSeg().localLength > currentLine->longestLength)                                                                                            \
+			currentLine->longestLength = currentLine->GetSeg().localLength;                                                                                            \
+	}
+#define attempt_to_add_current_line                                                                                      \
+	{                                                                                                                    \
+		if (currentLine->index == lines.size() - 1)                                                                      \
+		{                                                                                                                \
+			float upperBounding = -10e10F;                                                                               \
+			float lowerBounding = 10e10F;                                                                                \
+			for (const auto &seg : currentLine->segments)                                                                \
+			{                                                                                                            \
+				if (seg.localLength - seg.startCursorPos == 0.0F)                                                        \
+					continue;                                                                                            \
+				if (-(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset > upperBounding)                             \
+					upperBounding = -(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset;                             \
+				if (-(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset - seg.state.fontSize * 2.0F < lowerBounding) \
+					lowerBounding = -(1.0F - seg.state.fontSize) * 2.0F + seg.state.yOffset - seg.state.fontSize * 2.0F; \
+			}                                                                                                            \
+			currentLine->yStart -= upperBounding;                                                                        \
+			float cursorYAdvance = -font->cursorYAdvance + lowerBounding + 2.0F;                                         \
+			if (currentLine->yStart + cursorYAdvance < boundingYVal)                                                     \
+			{                                                                                                            \
+				lines.pop_back();                                                                                        \
+				currentLine = nullptr;                                                                                   \
+				goto no_more_lines;                                                                                      \
+			}                                                                                                            \
+			lines.push_back(Line(lines.size(), currentState, currentLine->yStart + cursorYAdvance));                     \
+			currentLine = &lines[lines.size() - 1];                                                                      \
+		}                                                                                                                \
+		else                                                                                                             \
+		{                                                                                                                \
+			currentLine = &lines[currentLine->index + 1];                                                                \
+		}                                                                                                                \
+	}
 
 	bool lastCharWasSpace = false;
 	bool canProcessCommands = true;
+	bool foundCusor = false;
+	if (cursorPos == -1)
+		foundCusor = true;
 	for (size_t i = 0; i < str.length(); ++i)
 	{
 		if (canProcessCommands && i < str.length() - 1 && str[i] == '!' && str[i + 1] == '|')
@@ -408,7 +484,7 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 
 			// Invalid commands are ignored
 			State newState(currentState);
-			for (const std::string& command : commands)
+			for (const std::string &command : commands)
 			{
 				// Action Commands
 				if (command == "quit")
@@ -436,9 +512,8 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 
 					// Pos travel always ends the current word
 
-					if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal) attempt_to_add_current_line
-					else
-						currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
+					if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal)
+						attempt_to_add_current_line else currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
 
 					add_current_word_to_current_line;
 					clear_word_value;
@@ -450,9 +525,8 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 				}
 				else if (command == "slidepos")
 				{
-					if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal) attempt_to_add_current_line
-					else
-						currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
+					if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal)
+						attempt_to_add_current_line else currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
 
 					add_current_word_to_current_line;
 					clear_word_value;
@@ -496,7 +570,7 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 						commandParts[0] = commandParts[0].substr(0, commandParts[0].length() - 1);
 					}
 
-					float* valuePtr = nullptr;
+					float *valuePtr = nullptr;
 					if (commandParts[0] == "color")
 						valuePtr = &newState.color.r;
 					else if (commandParts[0] == "fontsize")
@@ -539,9 +613,8 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 
 		if (str[i] == '\n')
 		{
-			if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal) attempt_to_add_current_line
-			else
-				currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
+			if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal)
+				attempt_to_add_current_line else currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
 
 			add_current_word_to_current_line;
 			clear_word_value;
@@ -558,6 +631,12 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 		if (str[i] == ' ')
 		{
 			add_word_char(str[i], 0.0F);
+			if (!foundCusor && i >= cursorPos)
+			{
+				currentWord[currentWord.size()-1].images.push_back(Line::Segment::Image(currentWord[currentWord.size()-1].value.length() - 1, 0.15F, Internal::Storage::GameObjects2::texture.GetTexInfo("white"), cursorColor));
+				foundCusor = true;
+				++quadCount;
+			}
 			currentWordTerminatingSpaceLength += font->characters[str[i]].cursorXAdvance * currentState.fontSize;
 
 			lastCharWasSpace = true;
@@ -567,21 +646,25 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 			if (lastCharWasSpace)
 			{
 				// End of word
-				if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal) attempt_to_add_current_line
-				else
-					currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
+				if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal)
+					attempt_to_add_current_line else currentLine->GetSeg().localLength += lastWordTerminatingSpaceLength;
 
 				add_current_word_to_current_line;
 				clear_word_value;
 				lastWordTerminatingSpaceLength = currentWordTerminatingSpaceLength;
 				currentWordTerminatingSpaceLength = 0.0F;
+				lastCharWasSpace = false;
 			}
-
-			lastCharWasSpace = false;
 
 			if (currentTotalWordLength + font->characters[str[i]].cursorXAdvance * currentState.fontSize <= boundingXVal)
 			{
 				add_word_char(str[i], font->characters[str[i]].cursorXAdvance * currentState.fontSize);
+				if (!foundCusor && i >= cursorPos)
+				{
+					currentWord[currentWord.size()-1].images.push_back(Line::Segment::Image(currentWord[currentWord.size()-1].value.length() - 1, 0.15F, Internal::Storage::GameObjects2::texture.GetTexInfo("white"), cursorColor));
+					foundCusor = true;
+					++quadCount;
+				}
 				++quadCount;
 			}
 			else
@@ -594,6 +677,13 @@ void TextRenderComponent2::SetText(const std::string& str, bool force)
 				continue;
 			}
 		}
+	}
+
+	if (!foundCusor)
+	{
+		currentWord[currentWord.size()-1].images.push_back(Line::Segment::Image(currentWord[currentWord.size()-1].value.length(), 0.15F, Internal::Storage::GameObjects2::texture.GetTexInfo("white"), cursorColor));
+		foundCusor = true;
+		++quadCount;
 	}
 
 	if (currentLine->longestLength + lastWordTerminatingSpaceLength + currentTotalWordLength > boundingXVal)
@@ -619,16 +709,17 @@ no_more_lines:
 	colors = new FColor[quadCount * 4];
 	size_t vertexPtr = 0;
 
-	for (const Line& line : lines)
+	for (Line &line : lines)
 	{
 		cursorPos.y = line.yStart;
-		
+
+		// Cancel out first kerning [?]
 		float lineXStart = -10e10F;
-		for (const Line::Segment& segment : line.segments)
+		for (const Line::Segment &segment : line.segments)
 			if (segment.startCursorPos == 0.0F && -font->characters[segment.value[0]].offsetFromCursor.x > lineXStart)
 				lineXStart = -font->characters[segment.value[0]].offsetFromCursor.x;
 
-		for (const Line::Segment& segment : line.segments)
+		for (Line::Segment &segment : line.segments)
 		{
 			cursorPos.x = segment.startCursorPos + lineXStart;
 			float segmentYOffset = -(1.0F - segment.state.fontSize) * 2.0F + segment.state.yOffset;
@@ -636,7 +727,39 @@ no_more_lines:
 			char lastChar = ' ';
 			for (size_t i = 0; i < segment.value.length(); ++i)
 			{
-				Font::Character& c = font->characters[segment.value[i]];
+				Font::Character &c = font->characters[segment.value[i]];
+
+				// TODO: Also do after loop for ones the size of the list
+				for (Line::Segment::Image &img : segment.images)
+					if (img.succeedingChar == i)
+					{
+						img.drawn = true;
+						//std::cerr << "cposdraw " << i << " " << segment.value[i] << std::endl;
+						FVector2 quadSize(img.size, 1.0F);
+						FVector2 pos = cursorPos + FVector2(0.0F, -1.0F * segment.state.fontSize);
+						vertices[vertexPtr] = pos + UNIT_UPPER_RIGHT * quadSize * segment.state.fontSize;
+						vertices[vertexPtr + 1] = pos + UNIT_UPPER_LEFT * quadSize * segment.state.fontSize;
+						vertices[vertexPtr + 2] = pos + UNIT_LOWER_LEFT * quadSize * segment.state.fontSize;
+						vertices[vertexPtr + 3] = pos + UNIT_LOWER_RIGHT * quadSize * segment.state.fontSize;
+
+						texCoords[vertexPtr].x = img.texCoords.x + img.texCoords.z;
+						texCoords[vertexPtr].y = img.texCoords.y + img.texCoords.w;
+						texCoords[vertexPtr + 1].x = img.texCoords.x;
+						texCoords[vertexPtr + 1].y = img.texCoords.y + img.texCoords.w;
+						texCoords[vertexPtr + 2].x = img.texCoords.x;
+						texCoords[vertexPtr + 2].y = img.texCoords.y;
+						texCoords[vertexPtr + 3].x = img.texCoords.x + img.texCoords.z;
+						texCoords[vertexPtr + 3].y = img.texCoords.y;
+
+						colors[vertexPtr] = img.color;
+						colors[vertexPtr + 1] = img.color;
+						colors[vertexPtr + 2] = img.color;
+						colors[vertexPtr + 3] = img.color;
+
+						vertexPtr += 4;
+
+						cursorPos.x += img.size * segment.state.fontSize;
+					}
 
 				if (segment.value[i] != ' ')
 				{
@@ -645,13 +768,13 @@ no_more_lines:
 					FVector2 pos = cursorPos;
 					pos.x += c.quadSize.x * segment.state.fontSize + c.offsetFromCursor.x * segment.state.fontSize;
 					pos.y += -c.quadSize.y * segment.state.fontSize + c.offsetFromCursor.y * segment.state.fontSize + segmentYOffset;
-					vertices[vertexPtr    ] = pos + UNIT_UPPER_RIGHT * c.quadSize * segment.state.fontSize;
+					vertices[vertexPtr] = pos + UNIT_UPPER_RIGHT * c.quadSize * segment.state.fontSize;
 					vertices[vertexPtr + 1] = pos + UNIT_UPPER_LEFT * c.quadSize * segment.state.fontSize;
 					vertices[vertexPtr + 2] = pos + UNIT_LOWER_LEFT * c.quadSize * segment.state.fontSize;
 					vertices[vertexPtr + 3] = pos + UNIT_LOWER_RIGHT * c.quadSize * segment.state.fontSize;
 
-					texCoords[vertexPtr    ].x = c.texCoords.x + c.texCoords.z;
-					texCoords[vertexPtr    ].y = c.texCoords.y + c.texCoords.w;
+					texCoords[vertexPtr].x = c.texCoords.x + c.texCoords.z;
+					texCoords[vertexPtr].y = c.texCoords.y + c.texCoords.w;
 					texCoords[vertexPtr + 1].x = c.texCoords.x;
 					texCoords[vertexPtr + 1].y = c.texCoords.y + c.texCoords.w;
 					texCoords[vertexPtr + 2].x = c.texCoords.x;
@@ -659,7 +782,7 @@ no_more_lines:
 					texCoords[vertexPtr + 3].x = c.texCoords.x + c.texCoords.z;
 					texCoords[vertexPtr + 3].y = c.texCoords.y;
 
-					colors[vertexPtr    ] = segment.state.color;
+					colors[vertexPtr] = segment.state.color;
 					colors[vertexPtr + 1] = segment.state.color;
 					colors[vertexPtr + 2] = segment.state.color;
 					colors[vertexPtr + 3] = segment.state.color;
@@ -670,18 +793,47 @@ no_more_lines:
 
 				cursorPos.x += c.cursorXAdvance * segment.state.fontSize;
 			}
+
+			for (const Line::Segment::Image &img : segment.images)
+				if (!img.drawn)
+				{
+					FVector2 quadSize(img.size, 1.0F);
+					FVector2 pos = cursorPos + FVector2(0.0F, -1.0F * segment.state.fontSize);
+					vertices[vertexPtr] = pos + UNIT_UPPER_RIGHT * quadSize * segment.state.fontSize;
+					vertices[vertexPtr + 1] = pos + UNIT_UPPER_LEFT * quadSize * segment.state.fontSize;
+					vertices[vertexPtr + 2] = pos + UNIT_LOWER_LEFT * quadSize * segment.state.fontSize;
+					vertices[vertexPtr + 3] = pos + UNIT_LOWER_RIGHT * quadSize * segment.state.fontSize;
+
+					texCoords[vertexPtr].x = img.texCoords.x + img.texCoords.z;
+					texCoords[vertexPtr].y = img.texCoords.y + img.texCoords.w;
+					texCoords[vertexPtr + 1].x = img.texCoords.x;
+					texCoords[vertexPtr + 1].y = img.texCoords.y + img.texCoords.w;
+					texCoords[vertexPtr + 2].x = img.texCoords.x;
+					texCoords[vertexPtr + 2].y = img.texCoords.y;
+					texCoords[vertexPtr + 3].x = img.texCoords.x + img.texCoords.z;
+					texCoords[vertexPtr + 3].y = img.texCoords.y;
+
+					colors[vertexPtr] = img.color;
+					colors[vertexPtr + 1] = img.color;
+					colors[vertexPtr + 2] = img.color;
+					colors[vertexPtr + 3] = img.color;
+
+					vertexPtr += 4;
+
+					cursorPos.x += img.size * segment.state.fontSize;
+				}
 		}
 	}
 }
 
-TextRenderComponent2* TextRenderComponent2::WithBorder(const FColor& color)
+TextRenderComponent2 *TextRenderComponent2::WithBorder(const FColor &color)
 {
 	EnableBorder(color);
 
 	return this;
 }
 
-void TextRenderComponent2::SetBorder(float widthDist, float edgeDist, float borderWidthDist, float borderEdgeDist, const FColor& borderColor)
+void TextRenderComponent2::SetBorder(float widthDist, float edgeDist, float borderWidthDist, float borderEdgeDist, const FColor &borderColor)
 {
 	this->widthDist = widthDist;
 	this->edgeDist = edgeDist;
@@ -690,7 +842,7 @@ void TextRenderComponent2::SetBorder(float widthDist, float edgeDist, float bord
 	this->borderColor = borderColor;
 }
 
-void TextRenderComponent2::EnableBorder(const FColor& color)
+void TextRenderComponent2::EnableBorder(const FColor &color)
 {
 	widthDist = 0.45F;
 	edgeDist = 0.35F;
@@ -708,9 +860,9 @@ void TextRenderComponent2::DisableBorder()
 	borderColor = FColor(0.0F, 0.0F, 0.0F, 0.0F);
 }
 
-void TextRenderComponent2::LoadData(FVector2* vertices, FVector2* texCoords, FColor* colors)
+void TextRenderComponent2::LoadData(FVector2 *vertices, FVector2 *texCoords, FColor *colors)
 {
-	const FMatrix3x3& matrix = charParentTransform.GetMatrix();
+	const FMatrix3x3 &matrix = charParentTransform.GetMatrix();
 	for (unsigned short i = 0; i < quadCount * 4; ++i)
 	{
 		vertices[i] = Transform(this->vertices[i], matrix);

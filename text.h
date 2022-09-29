@@ -50,10 +50,18 @@ private:
 
 	int characterSize;
 	Transform2 charParentTransform;
+	int lastCursorPos;
+	FColor lastCursorColor;
 
 	float widthDist, edgeDist, borderWidthDist, borderEdgeDist;
 	FColor borderColor;
 public:
+	// Last bounds taken by used text
+	FVector2 lastBounds;
+	// -1 for none or the index to display it before
+	int cursorPos;
+	FColor cursorColor;
+
 	TextRenderComponent2(Font* font, int characterSize, const std::string& str = "");
 	TextRenderComponent2(const TextRenderComponent2& other);
 
