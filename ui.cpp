@@ -24,10 +24,15 @@ FMatrix3x3 Internal::Storage::GameObjects2::activeCameraMatrix = FMatrix3x3(1.0F
 Shader Internal::Storage::GameObjects2::shader;
 Shader Internal::Storage::GameObjects2::independentShader;
 
-namespace
-{
-	inline FMatrix3x3 ConstructCameraMatrix(const Transform2& transform)
-	{
+SpecialState::SpecialState() { }
+
+void SpecialState::CPUStart() { }
+void SpecialState::CPUStop() { }
+void SpecialState::GPUStart() { }
+void SpecialState::GPUStop() { }
+
+namespace {
+	inline FMatrix3x3 ConstructCameraMatrix(const Transform2& transform) {
 		FMatrix3x3 matrix(1.0F);
 
 		FMatrix3x3 temp(1.0F);
@@ -44,35 +49,71 @@ namespace
 	}
 }
 
-void Camera2::CPUStart()
-{
+Camera2::Camera2() { }
+
+void Camera2::CPUStart() {
 	Internal::Storage::GameObjects2::activeCameraMatrix = ConstructCameraMatrix(gameObject->transform);
 }
 
-void Camera2::CPUStop()
-{
+void Camera2::CPUStop() {
 	Internal::Storage::GameObjects2::activeCameraMatrix = FMatrix3x3(1.0F);
 }
 
-void Camera2::GPUStart()
-{
+void Camera2::GPUStart() {
 	Shader::LoadMatrix3x3(0, ConstructCameraMatrix(gameObject->transform));
 }
 
-void Camera2::GPUStop()
-{
+void Camera2::GPUStop() {
 	Shader::LoadMatrix3x3(0, FMatrix3x3(1.0F));
 }
 
-namespace
-{
-	struct ListRequest
-	{
+ScissorState::ScissorState() :
+	x(0),
+	y(0),
+	width(EventsState::windowWidth),
+	height(EventsState::windowHeight)
+{ }
+
+ScissorState::ScissorState(GLint x, GLint y, GLsizei width, GLsizei height) :
+	x(x),
+	y(y),
+	width(width),
+	height(height) { }
+
+void ScissorState::GPUStart() {
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(x, y, width, height);
+}
+
+void ScissorState::GPUStop() {
+	glDisable(GL_SCISSOR_TEST);
+}
+
+ScissorStateComponent::ScissorStateComponent() { }
+
+void ScissorStateComponent::GPUStart() {
+	FVector3 llCorner = gameObject->transform.GetMatrix() * FVector3(-1.0F, -1.0F, 1.0F);
+	FVector3 urCorner = gameObject->transform.GetMatrix() * FVector3(1.0F, 1.0F, 1.0F);
+	int x0 = static_cast<int>((llCorner.x + 1.0F) * 0.5F * EventsState::windowWidth);
+	int y0 = static_cast<int>((llCorner.y + 1.0F) * 0.5F * EventsState::windowHeight);
+	int x1 = static_cast<int>((urCorner.x + 1.0F) * 0.5F * EventsState::windowWidth);
+	int y1 = static_cast<int>((urCorner.y + 1.0F) * 0.5F * EventsState::windowHeight);
+
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(x0, y0, x1 - x0, y1 - y0);
+}
+
+void ScissorStateComponent::GPUStop() {
+	glDisable(GL_SCISSOR_TEST);
+}
+
+namespace {
+	// TODO: use general common version!
+	struct ListRequest {
 		UIComponent* object;
 		bool isAdd;
 
-		ListRequest(UIComponent* object, bool isAdd)
-		{
+		ListRequest(UIComponent* object, bool isAdd) {
 			this->object = object;
 			this->isAdd = isAdd;
 		}
@@ -88,18 +129,26 @@ namespace
 RenderComponent2::RenderComponent2(const std::string& textureName, const FColor& color, unsigned short quadCount) :
 	color(color),
 	quadCount(quadCount),
-	specialState(nullptr)
-{
+	specialState(nullptr) {
 	SetTexture(textureName);
 }
 
-void RenderComponent2::SetTexture(const std::string& textureName)
-{
+RenderComponent2::RenderComponent2(const RenderComponent2& other) :
+	atlasTexInfo(other.atlasTexInfo),
+	color(other.color),
+	quadCount(other.quadCount),
+	specialState(other.specialState) { }
+
+RenderComponent2* RenderComponent2::WithSpecialState(SpecialState* specialState) {
+	this->specialState = specialState;
+	return this;
+}
+
+void RenderComponent2::SetTexture(const std::string& textureName) {
 	atlasTexInfo = Internal::Storage::GameObjects2::texture.GetTexInfo(textureName);
 }
 
-void RenderComponent2::LoadData(FVector2* vertices, FVector2* texCoords, FColor* colors)
-{
+void RenderComponent2::LoadData(FVector2* vertices, FVector2* texCoords, FColor* colors) {
 	const FMatrix3x3& matrix = gameObject->transform.GetMatrix();
 	vertices[0] = Transform(UNIT_UPPER_RIGHT, matrix);
 	vertices[1] = Transform(UNIT_UPPER_LEFT, matrix);
@@ -128,8 +177,7 @@ void RenderComponent2::LoadData(FVector2* vertices, FVector2* texCoords, FColor*
 	colors[3] = color;
 }
 
-void RenderComponent2::OnEnable()
-{
+void RenderComponent2::OnEnable() {
 	rendering.push_back(this);
 	
 	if (specialState == nullptr && gameObject->transform.GetParent() != nullptr && gameObject->transform.GetParent()->GetOwner() != nullptr)
@@ -137,39 +185,52 @@ void RenderComponent2::OnEnable()
 			specialState = parentRenderComponent->specialState;
 }
 
-void RenderComponent2::OnDisable()
-{
+void RenderComponent2::OnDisable() {
 	rendering.remove(this);
 }
 
-void IndependentRenderComponent2::OnEnable()
-{
+IndependentRenderComponent2::IndependentRenderComponent2(const Texture2D& texture, const FColor& color) :
+	texture(texture),
+	color(color) { }
+
+IndependentRenderComponent2::IndependentRenderComponent2(const IndependentRenderComponent2& other) :
+	texture(other.texture),
+	color(other.color) { }
+
+void IndependentRenderComponent2::OnEnable() {
 	independentRendering.push_back(this);
 }
 
-void IndependentRenderComponent2::OnDisable()
-{
+void IndependentRenderComponent2::OnDisable() {
 	independentRendering.remove(this);
 }
 
-bool UIComponent::ContainsPoint(float x, float y)
-{
+UIComponent::UIComponent() { }
+
+void UIComponent::OnHover(const GameTime& deltaTime) { }
+
+void UIComponent::OnClick(int button) { }
+
+void UIComponent::OnRelease(int button) { }
+
+void UIComponent::OnSelect() { }
+
+void UIComponent::OnDeselect() { }
+
+bool UIComponent::ContainsPoint(float x, float y) {
 	FVector3 min = gameObject->transform.GetMatrix() * FVector3(-1.0F, -1.0F, 1.0F);
 	FVector3 max = gameObject->transform.GetMatrix() * FVector3(1.0F, 1.0F, 1.0F);
 	return x >= min.x && x < max.x && y >= min.y && y < max.y;
 }
 
-void UIComponent::OnEnable()
-{
+void UIComponent::OnEnable() {
 	activeUIRequests.push_back(ListRequest(this, true));
 }
 
-void UIComponent::OnDisable()
-{
+void UIComponent::OnDisable() {
 	activeUIRequests.push_back(ListRequest(this, false));
 
-	if (Internal::Storage::GameObjects2::selected == this)
-	{
+	if (Internal::Storage::GameObjects2::selected == this) {
 		OnDeselect();
 		Internal::Storage::GameObjects2::selected = nullptr;
 	}
@@ -184,12 +245,9 @@ void UIComponent::OnDisable()
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }*/
 
-namespace Internal
-{
-	namespace GameObjects2
-	{
-		void Init(unsigned int initialAtlasSize, bool pixelArt)
-		{
+namespace Internal {
+	namespace GameObjects2 {
+		void Init(unsigned int initialAtlasSize, bool pixelArt) {
 			Storage::GameObjects2::shader = Shader("Internal/Shaders/2d");
 			Storage::GameObjects2::shader.Bind();
 			Shader::LoadMatrix3x3(0, FMatrix3x3(1.0F));
@@ -222,20 +280,15 @@ namespace Internal
 			delete[] batchIndices;*/
 		}
 
-		void Clear()
-		{
-			if (Storage::GameObjects2::batchVertices != nullptr)
-			{
-				delete[] Storage::GameObjects2::batchVertices;
-				delete[] Storage::GameObjects2::batchTexCoords;
-				delete[] Storage::GameObjects2::batchColors;
-			}
+		void Clear() {
+			if (Storage::GameObjects2::batchVertices == nullptr) return
+			delete[] Storage::GameObjects2::batchVertices;
+			delete[] Storage::GameObjects2::batchTexCoords;
+			delete[] Storage::GameObjects2::batchColors;
 		}
 
-		void Update(const GameTime& time)
-		{
-			for (ListRequest& request : activeUIRequests)
-			{
+		void Update(const GameTime& time) {
+			for (ListRequest& request : activeUIRequests) {
 				if (request.isAdd)
 					activeUI.push_back(request.object);
 				else
@@ -250,12 +303,10 @@ namespace Internal
 			float localizedMX = mx;
 			float localizedMY = my;
 			SpecialState* activeSpecialState = nullptr;
-			for (auto it = activeUI.rbegin(); it != activeUI.rend(); ++it)
-			{
+			for (auto it = activeUI.rbegin(); it != activeUI.rend(); ++it) {
 				UIComponent& node = **it;
 				if (RenderComponent2* renderComponent = node.gameObject->GetComponent<RenderComponent2>())
-					if (renderComponent->specialState != activeSpecialState)
-					{
+					if (renderComponent->specialState != activeSpecialState) {
 						if (activeSpecialState != nullptr)
 							activeSpecialState->CPUStop();
 						
@@ -269,8 +320,7 @@ namespace Internal
 						localizedMX = localizedMouseCoords.x;
 						localizedMY = localizedMouseCoords.y;
 					}
-				if (node.ContainsPoint(localizedMX, localizedMY))
-				{
+				if (node.ContainsPoint(localizedMX, localizedMY)) {
 					node.OnHover(time);
 					if (Input::WasButtonPressed(Input::LEFT_MOUSE_BUTTON))
 						node.OnClick(Input::LEFT_MOUSE_BUTTON);
@@ -286,8 +336,7 @@ namespace Internal
 					if (Input::WasButtonReleased(Input::RIGHT_MOUSE_BUTTON))
 						node.OnRelease(Input::RIGHT_MOUSE_BUTTON);
 
-					if (Internal::Storage::GameObjects2::selected != &node && (Input::WasButtonPressed(Input::LEFT_MOUSE_BUTTON) || Input::WasButtonPressed(Input::MIDDLE_MOUSE_BUTTON) || Input::WasButtonPressed(Input::RIGHT_MOUSE_BUTTON)))
-					{
+					if (Internal::Storage::GameObjects2::selected != &node && (Input::WasButtonPressed(Input::LEFT_MOUSE_BUTTON) || Input::WasButtonPressed(Input::MIDDLE_MOUSE_BUTTON) || Input::WasButtonPressed(Input::RIGHT_MOUSE_BUTTON))) {
 						if (Internal::Storage::GameObjects2::selected != nullptr)
 							Internal::Storage::GameObjects2::selected->OnDeselect();
 
@@ -301,8 +350,7 @@ namespace Internal
 				}
 			}
 
-			if (Input::WasButtonPressed(Input::LEFT_MOUSE_BUTTON) || Input::WasButtonPressed(Input::MIDDLE_MOUSE_BUTTON) || Input::WasButtonPressed(Input::RIGHT_MOUSE_BUTTON))
-			{
+			if (Input::WasButtonPressed(Input::LEFT_MOUSE_BUTTON) || Input::WasButtonPressed(Input::MIDDLE_MOUSE_BUTTON) || Input::WasButtonPressed(Input::RIGHT_MOUSE_BUTTON)) {
 				if (Internal::Storage::GameObjects2::selected != nullptr)
 					Internal::Storage::GameObjects2::selected->OnDeselect();
 
@@ -310,8 +358,7 @@ namespace Internal
 			}
 		}
 
-		void Render()
-		{
+		void Render() {
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
@@ -319,8 +366,7 @@ namespace Internal
 
 			Storage::GameObjects2::independentShader.Bind();
 			Storage::Rendering::quadMesh.Bind();
-			for (IndependentRenderComponent2* component : independentRendering)
-			{
+			for (IndependentRenderComponent2* component : independentRendering) {
 				component->texture.Bind(0);
 				Shader::LoadMatrix3x3(0, component->gameObject->transform.GetMatrix());
 				Shader::LoadVector4(1, &component->color.r);
@@ -341,14 +387,10 @@ namespace Internal
 			unsigned short nextLoadIndex = 0;
 			unsigned short index = 0;
 			bool needsReturn = false;
-			while (component != rendering.end())
-			{
-				if (isLoading)
-				{
-					if ((*nextLoadComponent)->specialState != specialState)
-					{
-						if (nextLoadIndex != 0)
-						{
+			while (component != rendering.end()) {
+				if (isLoading) {
+					if ((*nextLoadComponent)->specialState != specialState) {
+						if (nextLoadIndex != 0) {
 							Internal::Storage::GameObjects2::batchMesh.Bind();
 							Internal::Storage::GameObjects2::batchMesh.Substitute(0, Storage::GameObjects2::batchVertices, 0, nextLoadIndex * 4);
 							Internal::Storage::GameObjects2::batchMesh.Substitute(1, Storage::GameObjects2::batchTexCoords, 0, nextLoadIndex * 4);
@@ -367,21 +409,15 @@ namespace Internal
 
 						goto batch_start;
 					}
-					if ((*nextLoadComponent)->quadCount + nextLoadIndex <= Storage::GameObjects2::batchCapacity)
-					{
+					if ((*nextLoadComponent)->quadCount + nextLoadIndex <= Storage::GameObjects2::batchCapacity) {
 						(*nextLoadComponent)->LoadData(Storage::GameObjects2::batchVertices + nextLoadIndex * 4, Storage::GameObjects2::batchTexCoords + nextLoadIndex * 4, Storage::GameObjects2::batchColors + nextLoadIndex * 4);
 						nextLoadIndex += (*nextLoadComponent)->quadCount;
 						++nextLoadComponent;
-					}
-					else
-					{
+					} else {
 						isLoading = false;
 					}
-				}
-				else
-				{
-					if ((*component)->specialState != specialState)
-					{
+				} else {
+					if ((*component)->specialState != specialState) {
 						//std::cerr << "found special state while counting" << std::endl;
 
 						needsReturn = true;
@@ -393,8 +429,7 @@ namespace Internal
 				++component;
 			}
 
-			if (!isLoading)
-			{
+			if (!isLoading) {
 			mesh_build:
 				unsigned short oldCapacity = Storage::GameObjects2::batchCapacity;
 				FVector2* oldVertices = Storage::GameObjects2::batchVertices;
@@ -406,8 +441,7 @@ namespace Internal
 				Storage::GameObjects2::batchTexCoords = new FVector2[Storage::GameObjects2::batchCapacity * 4];
 				Storage::GameObjects2::batchColors = new FColor[Storage::GameObjects2::batchCapacity * 4];
 				
-				if (oldCapacity != 0)
-				{
+				if (oldCapacity != 0) {
 					memcpy(Storage::GameObjects2::batchVertices, oldVertices, oldCapacity * 4 * sizeof(FVector2));
 					memcpy(Storage::GameObjects2::batchTexCoords, oldTexCoords, oldCapacity * 4 * sizeof(FVector2));
 					memcpy(Storage::GameObjects2::batchColors, oldColors, oldCapacity * 4 * sizeof(FColor));
@@ -417,8 +451,7 @@ namespace Internal
 				delete[] oldTexCoords;
 				delete[] oldColors;
 
-				while (nextLoadComponent != component)
-				{
+				while (nextLoadComponent != component) {
 					(*nextLoadComponent)->LoadData(Storage::GameObjects2::batchVertices + nextLoadIndex * 4, Storage::GameObjects2::batchTexCoords + nextLoadIndex * 4, Storage::GameObjects2::batchColors + nextLoadIndex * 4);
 					nextLoadIndex += (*nextLoadComponent)->quadCount;
 					++nextLoadComponent;
@@ -427,8 +460,7 @@ namespace Internal
 				unsigned int indexCount = Storage::GameObjects2::batchCapacity * 6;
 				unsigned short* batchIndices = new unsigned short[indexCount];
 				unsigned int vertexIndex = 0;
-				for (unsigned int i = 0; i < indexCount; i += 6)
-				{
+				for (unsigned int i = 0; i < indexCount; i += 6) {
 					batchIndices[i    ] = vertexIndex + 0;
 					batchIndices[i + 1] = vertexIndex + 1;
 					batchIndices[i + 2] = vertexIndex + 2;
@@ -443,9 +475,7 @@ namespace Internal
 				delete[] batchIndices;
 
 				Internal::Storage::GameObjects2::batchMesh.Bind();
-			}
-			else
-			{
+			} else {
 				Internal::Storage::GameObjects2::batchMesh.Bind();
 				Internal::Storage::GameObjects2::batchMesh.Substitute(0, Storage::GameObjects2::batchVertices, 0, nextLoadIndex * 4);
 				Internal::Storage::GameObjects2::batchMesh.Substitute(1, Storage::GameObjects2::batchTexCoords, 0, nextLoadIndex * 4);
@@ -456,8 +486,7 @@ namespace Internal
 			Internal::Storage::GameObjects2::batchMesh.SetDrawCount(nextLoadIndex * 6);
 			Internal::Storage::GameObjects2::batchMesh.DrawElements();
 
-			if (needsReturn)
-			{
+			if (needsReturn) {
 				if (specialState != nullptr)
 					specialState->GPUStop();
 				specialState = (*nextLoadComponent)->specialState;
@@ -470,12 +499,14 @@ namespace Internal
 	}
 }
 
-void MouseReleasingComponent2::OnEnable()
-{
+MouseReleasingComponent2::MouseReleasingComponent2() { }
+
+MouseReleasingComponent2::MouseReleasingComponent2(MouseReleasingComponent2& other) { }
+
+void MouseReleasingComponent2::OnEnable() {
 	EventsState::AddCursorFreeLock();
 }
 
-void MouseReleasingComponent2::OnDisable()
-{
+void MouseReleasingComponent2::OnDisable() {
 	EventsState::FreeCursorFreeLock();
 }

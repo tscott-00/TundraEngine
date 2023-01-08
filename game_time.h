@@ -2,8 +2,7 @@
 
 #include <chrono>
 
-class GameTime
-{
+class GameTime {
 public:
 	float deltaTime;
 	float totalTime;
@@ -14,4 +13,3 @@ public:
 private:
 	std::chrono::_V2::system_clock::time_point lastTime;
 };
-

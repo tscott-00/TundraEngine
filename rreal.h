@@ -2,8 +2,7 @@
 
 #include "general_common.h"
 
-class RReal
-{
+class RReal {
 public:
 	RReal(int64_t seed);
 	RReal();

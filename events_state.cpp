@@ -18,8 +18,7 @@ int EventsState::windowWidth = 0;
 int EventsState::windowHeight = 0;
 unsigned int EventsState::cursorFreeLockCount;
 
-void EventsState::Init(int windowWidth, int windowHeight)
-{
+void EventsState::Init(int windowWidth, int windowHeight) {
 	EventsState::windowWidth = windowWidth;
 	EventsState::windowHeight = windowHeight;
 	internalKeyStates = SDL_GetKeyboardState(nullptr);
@@ -29,13 +28,11 @@ void EventsState::Init(int windowWidth, int windowHeight)
 		keyStates[i] = 0;
 }
 
-void EventsState::Clear()
-{
+void EventsState::Clear() {
 	delete[] keyStates;
 }
 
-void EventsState::Update()
-{
+void EventsState::Update() {
 	mouseDX = 0;
 	mouseDY = 0;
 	mouseDM = 0;
@@ -50,10 +47,8 @@ void EventsState::Update()
 	releasedKeys.clear();
 	SDL_Event e;
 	// WARNING: button < 3 may not be necessary
-	while (SDL_PollEvent(&e))
-	{
-		switch (e.type)
-		{
+	while (SDL_PollEvent(&e)) {
+		switch (e.type) {
 		case SDL_MOUSEMOTION:
 			mouseDX += e.motion.xrel;
 			mouseDY += e.motion.yrel;
@@ -64,8 +59,7 @@ void EventsState::Update()
 		case SDL_MOUSEBUTTONDOWN:
 		{
 			uint8_t button = e.button.button - 1;
-			if (button < 3)
-			{
+			if (button <= 2) { 
 				mouseButtonStates[button] = true;
 				pressedMouseButtons[button] = true;
 			}
@@ -74,8 +68,7 @@ void EventsState::Update()
 		case SDL_MOUSEBUTTONUP:
 		{
 			uint8_t button = e.button.button - 1;
-			if (button < 3)
-			{
+			if (button <= 2) {
 				mouseButtonStates[button] = false;
 				releasedMouseButtons[button] = true;
 			}

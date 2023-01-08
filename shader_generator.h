@@ -4,8 +4,7 @@
 
 #include "general_common.h"
 
-namespace GenerateShaderCode
-{
+namespace GenerateShaderCode {
 	std::string QuadVertex();
 	std::string FinalStageFragment();
 	std::string BrdfLUTFragment();

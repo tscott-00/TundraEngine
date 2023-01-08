@@ -3,52 +3,27 @@
 #include <string>
 #include <vector>
 
-struct FloatData
-{
-	FloatData(float* floats, unsigned int count, std::string tag)
-	{
-		this->floats = floats;
-		this->count = count;
-		this->tag = tag;
-	}
+struct FloatData {
+	FloatData(float* floats, unsigned int count, const std::string& tag);
 
-	std::string print()
-	{
-		std::string str = "";
-		for (unsigned int i = 0; i < count; i++)
-			str += std::to_string(floats[i]) + " ";
-		return str;
-	}
+	std::string print();
 
 	float* floats;
 	unsigned int count;
 	std::string tag;
 };
 
-struct UIntData
-{
-	UIntData(unsigned short* ints, unsigned int count, std::string tag)
-	{
-		this->ints = ints;
-		this->count = count;
-		this->tag = tag;
-	}
+struct UIntData {
+	UIntData(unsigned short* ints, unsigned int count, const std::string& tag);
 
-	std::string print()
-	{
-		std::string str = "";
-		for (unsigned int i = 0; i < count; i++)
-			str += std::to_string(ints[i]) + " ";
-		return str;
-	}
+	std::string print();
 
 	unsigned short* ints;
 	unsigned int count;
 	std::string tag;
 };
 
-class TextData
-{
+class TextData {
 public:
 	TextData(const std::string& fileName);
 	~TextData();

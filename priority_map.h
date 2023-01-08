@@ -3,6 +3,7 @@
 
 // WARNING: Completely WIP, .../Java/General(Foundation)/ACSL/.../PriorityQueue.java
 
+// TODO: Is this used anywhere? Maybe it was meant for particles?
 template <class K, class V>
 struct MapEntry
 {

@@ -5,8 +5,7 @@
 
 #include "game_math.h"
 
-class EventsState
-{
+class EventsState {
 public:
 	// TODO: Most should be private with Get and some Set
 	static bool isProgramActive;
@@ -24,26 +23,22 @@ public:
 	static int windowWidth, windowHeight;
 	static unsigned int cursorFreeLockCount;
 
-	static inline bool IsCursorFree()
-	{
+	static inline bool IsCursorFree() {
 		return cursorFreeLockCount > 0;
 	}
 
-	static inline bool IsCursorLocked()
-	{
+	static inline bool IsCursorLocked() {
 		return cursorFreeLockCount == 0;
 	}
 
-	static inline void AddCursorFreeLock()
-	{
+	static inline void AddCursorFreeLock() {
 		if (cursorFreeLockCount == 0)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 
 		++cursorFreeLockCount;
 	}
 
-	static inline void FreeCursorFreeLock()
-	{
+	static inline void FreeCursorFreeLock() {
 		if (cursorFreeLockCount == 0)
 			return;
 
@@ -53,13 +48,11 @@ public:
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 	}
 
-	static inline float GetAspectRatio()
-	{
+	static inline float GetAspectRatio() {
 		return static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
 	}
 
-	static inline FVector2 GetGLSize(int pixelSizeX, int pixelSizeY)
-	{
+	static inline FVector2 GetGLSize(int pixelSizeX, int pixelSizeY) {
 		return FVector2(pixelSizeX / static_cast<float>(windowHeight), pixelSizeY / static_cast<float>(windowHeight));
 	}
 

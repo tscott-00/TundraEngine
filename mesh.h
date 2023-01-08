@@ -12,14 +12,12 @@
 #include "color.h"
 
 // TODO: drawCount should be glsizei, and other variables should also use propper opengl types
-class Mesh
-{
+class Mesh {
 	friend struct std::hash<Mesh>;
 public:
 	static uint64_t activeCirculationCount;
 private:
-	struct MeshBox
-	{
+	struct MeshBox {
 		GLuint vertexArrayObject;
 		GLuint* vertexBufferObjects;
 		unsigned int bufferCount;
@@ -34,10 +32,8 @@ private:
 
 	std::shared_ptr<MeshBox> meshBox;
 public:
-	struct Descriptor
-	{
-		struct Array
-		{
+	struct Descriptor {
+		struct Array {
 			GLsizeiptr arrDataSize;
 			const void* arr;
 			GLint typeSize;
@@ -91,8 +87,7 @@ public:
 	Mesh& operator=(Mesh&&) noexcept = default;
 	bool operator==(const Mesh& other) const;
 
-	bool IsLoaded() const
-	{
+	bool IsLoaded() const {
 		return meshBox != nullptr;
 	}
 
@@ -106,65 +101,52 @@ public:
 	// Will create new vao if needed, otherwise it just substitutes.
 	void Rebuild(const Descriptor& descriptor); // Only works if the type of mesh isn't changed (same num of vbos etc.)
 
-	inline void SetDrawCount(unsigned int drawCount)
-	{
+	inline void SetDrawCount(unsigned int drawCount) {
 		meshBox->drawCount = drawCount;
 	}
 
-	inline unsigned int GetDrawCount() const
-	{
+	inline unsigned int GetDrawCount() const {
 		return meshBox->drawCount;
 	}
 
-	inline void Bind() const
-	{
+	inline void Bind() const {
  		glBindVertexArray(meshBox->vertexArrayObject);
 	}
 
 	// TODO: mode = GL_TRIANGLES?
-	inline void DrawElements() const
-	{
+	inline void DrawElements() const {
 		glDrawElements(GL_TRIANGLES, meshBox->drawCount, GL_UNSIGNED_SHORT, 0);
 	}
 
-	inline void DrawElements(GLenum mode) const
-	{
+	inline void DrawElements(GLenum mode) const {
 		glDrawElements(mode, meshBox->drawCount, GL_UNSIGNED_SHORT, 0);
 	}
 
-	inline void DrawElementsLong() const
-	{
+	inline void DrawElementsLong() const {
 		glDrawElements(GL_TRIANGLES, meshBox->drawCount, GL_UNSIGNED_INT, 0);
 	}
 
-	inline void DrawElementsLong(GLenum mode) const
-	{
+	inline void DrawElementsLong(GLenum mode) const {
 		glDrawElements(mode, meshBox->drawCount, GL_UNSIGNED_INT, 0);
 	}
 
-	inline void DrawArrays() const
-	{
+	inline void DrawArrays() const {
 		glDrawArrays(GL_TRIANGLES, 0, meshBox->drawCount);
 	}
 
-	inline void DrawArrays(GLenum mode) const
-	{
+	inline void DrawArrays(GLenum mode) const {
 		glDrawArrays(mode, 0, meshBox->drawCount);
 	}
 
-	inline uint64_t GetCirculationID()
-	{
+	inline uint64_t GetCirculationID() {
 		return meshBox->circulationID;
 	}
 };
 
-namespace std
-{
+namespace std {
 	template <>
-	struct hash<Mesh>
-	{
-		std::size_t operator()(const Mesh& k) const
-		{
+	struct hash<Mesh> {
+		std::size_t operator()(const Mesh& k) const {
 			return hash<unsigned int>()(k.meshBox->vertexArrayObject);
 		}
 	};

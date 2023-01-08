@@ -1,10 +1,7 @@
 #pragma once
 
 #include <list>
-#include <iostream>
-#include <memory>
 
-#include "general_common.h"
 #include "game_math.h"
 
 static const FMatrix3x3 FLOAT_MAT3_IDENTITY = FMatrix3x3(1.0F);
@@ -15,8 +12,7 @@ class TGameObject;
 
 // This is a base template class and should never be used directly
 template<class T>
-class TTransform
-{
+class TTransform {
 protected:
 	TGameObject<T>* owner;
 	T* parent;
@@ -24,58 +20,48 @@ protected:
 	bool isDirty;
 	bool isEnabled;
 
-	void MakeDirty()
-	{
-		if (!isDirty)
-		{
-			isDirty = true;
-			for (auto child : children)
-				child->MakeDirty();
-		}
+	void MakeDirty() {
+		if (isDirty) return;
+		isDirty = true;
+		for (auto child : children)
+			child->MakeDirty();
 	}
 public:
 	TTransform() :
 		owner(nullptr),
 		parent(nullptr),
 		isDirty(true),
-		isEnabled(false)
-	{ }
+		isEnabled(false) { }
 
-	~TTransform() noexcept
-	{
+	~TTransform() noexcept {
 		for (T* child : children)
 			child->parent = nullptr;
 		if (this->parent != nullptr)
 			this->parent->children.remove(reinterpret_cast<T*>(this));
 	}
 
-	inline const std::list<T*> GetChildren() const // Must return copy because destructor removes and invalidates iterators and this is used in Destroy
-	{
+	// TODO: Non copy version or fix issue?
+	inline const std::list<T*> GetChildren() const { // Must return copy because destructor removes and invalidates iterators and this is used in Destroy
 		return children;
 	}
 
-	inline void ClearChildren()
-	{
+	inline void ClearChildren() {
 		children.clear();
 	}
 
-	inline void SetOwner(TGameObject<T>* owner)
-	{
+	inline void SetOwner(TGameObject<T>* owner) {
 		this->owner = owner;
 	}
 
-	inline TGameObject<T>* GetOwner() const
-	{
+	inline TGameObject<T>* GetOwner() const {
 		return owner;
 	}
 
-	inline void rtc_ForceDirty()
-	{
+	inline void rtc_ForceDirty() {
 		MakeDirty();
 	}
 
-	inline void SetParent(T* parent)
-	{
+	inline void SetParent(T* parent) {
 		if (this->parent != nullptr)
 			this->parent->children.remove(reinterpret_cast<T*>(this));
 		if (parent != nullptr)
@@ -84,8 +70,7 @@ public:
 		MakeDirty();
 	}
 
-	inline void SetParent(T& parent)
-	{
+	inline void SetParent(T& parent) {
 		if (this->parent != nullptr)
 			this->parent->children.remove(reinterpret_cast<T*>(this));
 		parent.children.push_back(reinterpret_cast<T*>(this));
@@ -93,15 +78,13 @@ public:
 		MakeDirty();
 	}
 
-	inline T* GetParent()
-	{
+	inline T* GetParent() {
 		return parent;
 	}
 };
 
 // TODO: Init matrix in static pool
-class Transform3 : public TTransform<Transform3>
-{
+class Transform3 : public TTransform<Transform3> {
 	friend class TGameObject<Transform3>;
 private:
 	static MemoryPool<RMatrix4x4> matrices;
@@ -119,25 +102,21 @@ public:
 		scale(scale),
 		rotation(rotation),
 		ownsAllocation(true),
-		matrix(matrices.alloc(REAL_ONE))
-	{ }
+		matrix(matrices.alloc(REAL_ONE)) { }
 
 	Transform3(const Transform3& other) :
 		position(other.position),
 		scale(other.scale),
 		rotation(other.rotation),
 		ownsAllocation(true),
-		matrix(matrices.alloc(REAL_ONE))
-	{ }
+		matrix(matrices.alloc(REAL_ONE)) { }
 
-	~Transform3() noexcept
-	{
+	~Transform3() noexcept {
 		if (ownsAllocation)
 			matrices.free(matrix);
 	}
 
-	Transform3& operator=(const Transform3& other) noexcept
-	{
+	Transform3& operator=(const Transform3& other) noexcept {
 		MakeDirty();
 		position = other.position;
 		scale = other.scale;
@@ -146,8 +125,7 @@ public:
 		return *this;
 	}
 
-	void PairAllocation(RMatrix4x4* matrix)
-	{
+	void PairAllocation(RMatrix4x4* matrix) {
 		assert(ownsAllocation);
 
 		memcpy(matrix, this->matrix, sizeof(RMatrix4x4));
@@ -156,49 +134,42 @@ public:
 		ownsAllocation = false;
 	}
 
-	void UnpairAllocation()
-	{
+	void UnpairAllocation() {
 		assert(!ownsAllocation);
 
 		matrix = matrices.alloc(*matrix);
 		ownsAllocation = true;
 	}
 
-	inline const RVector3& GetPosition() const
-	{
+	inline const RVector3& GetPosition() const {
 		return position;
 	}
 
-	inline void SetPosition(const RVector3& position)
-	{
+	inline void SetPosition(const RVector3& position) {
 		this->position = position;
 		MakeDirty();
 	}
 
-	inline void ChangePosition(const RVector3& delta)
-	{
+	inline void ChangePosition(const RVector3& delta) {
 		this->position += delta;
 		MakeDirty();
 	}
 
 	// TODO: Functions to set world vars?
 
-	inline RVector3 GetWorldPosition() const
-	{
+	inline RVector3 GetWorldPosition() const {
 		RVector4 pos(position, REAL_ONE);
 		pos = GetLocalToWorldMatrix() * pos;
 		return RVector3(pos);
 	}
 
 	// TODO: Implement
-	inline void SetWorldPosition(const RVector3& position)
-	{
+	inline void SetWorldPosition(const RVector3& position) {
 		this->position = position;
 		MakeDirty();
 	}
 
-	inline void LookAtPosition(const RVector3& position)
-	{
+	inline void LookAtPosition(const RVector3& position) {
 		FMatrix3x3 result;
 		result[2] = -Normalize(static_cast<FVector3>(position - this->position));
 		float radians = 90.0F / 180.0F * 3.141592653589793F;
@@ -214,56 +185,47 @@ public:
 		MakeDirty();
 	}
 
-	inline const FVector3& GetScale() const
-	{
+	inline const FVector3& GetScale() const {
 		return scale;
 	}
 
-	inline const FQuaternion& GetRotation() const
-	{
+	inline const FQuaternion& GetRotation() const {
 		return rotation;
 	}
 
-	inline void SetScale(const FVector3& scale)
-	{
+	inline void SetScale(const FVector3& scale) {
 		this->scale = scale;
 		this->MakeDirty();
 	}
 
-	inline void SetRotation(const FQuaternion& rotation)
-	{
+	inline void SetRotation(const FQuaternion& rotation) {
 		this->rotation = rotation;
 		this->MakeDirty();
 	}
 
-	inline FVector3 GetWorldRight() const
-	{
+	inline FVector3 GetWorldRight() const {
 		FMatrix3x3 rotation = GetWorldRotationMatrix3x3();
 		return rotation[0];
 	}
 
-	inline FVector3 GetWorldUp() const
-	{
+	inline FVector3 GetWorldUp() const {
 		FMatrix3x3 rotation = GetWorldRotationMatrix3x3();
 		return rotation[1];
 	}
 
-	inline FVector3 GetWorldForward() const
-	{
+	inline FVector3 GetWorldForward() const {
 		FMatrix3x3 rotation = GetWorldRotationMatrix3x3();
 		return -rotation[2];
 	}
 
-	FVector3 GetWorldScale() const
-	{
+	FVector3 GetWorldScale() const {
 		if (this->parent == nullptr)
 			return scale;
 		else
 			return this->parent->GetWorldScale() * scale;
 	}
 
-	FQuaternion GetWorldRotation() const
-	{
+	FQuaternion GetWorldRotation() const {
 		if (this->parent == nullptr)
 			return rotation;
 		else
@@ -271,34 +233,28 @@ public:
 	}
 
 	// TODO: Implement
-	inline void SetWorldRotation(const FQuaternion& rotation)
-	{
+	inline void SetWorldRotation(const FQuaternion& rotation) {
 		this->rotation = rotation;
 		MakeDirty();
 	}
 
-	inline FMatrix3x3 GetWorldRotationMatrix3x3() const
-	{
+	inline FMatrix3x3 GetWorldRotationMatrix3x3() const {
 		return CreateMatrix::Rotation3x3(GetWorldRotation());
 	}
 
-	inline FMatrix4x4 GetWorldRotationMatrix4x4() const
-	{
+	inline FMatrix4x4 GetWorldRotationMatrix4x4() const {
 		return CreateMatrix::Rotation4x4(GetWorldRotation());
 	}
 
-	inline const RMatrix4x4& GetLocalToWorldMatrix() const
-	{
+	inline const RMatrix4x4& GetLocalToWorldMatrix() const {
 		if (parent != nullptr)
 			return parent->GetMatrix();
 		else
 			return REAL_MAT4_IDENTITY;
 	}
 
-	const RMatrix4x4& GetMatrix()
-	{
-		if (isDirty)
-		{
+	const RMatrix4x4& GetMatrix() {
+		if (isDirty) {
 			RMatrix4x4& matrix = *this->matrix;
 			if (parent != nullptr)
 				matrix = parent->GetMatrix();
@@ -317,8 +273,7 @@ public:
 
 class Transform2;
 
-class Constraint
-{
+class Constraint {
 protected:
 	float GetDomainPixelScale(const Transform2& transform) const;
 public:
@@ -329,26 +284,22 @@ public:
 	Constraint(float value, bool isRelative) :
 		value(value),
 		isRelative(isRelative),
-		component(0)
-	{ }
+		component(0) { }
 
 	virtual void EnforceValidity(Transform2& transform) const = 0;
 };
 
-class PosConstraint : public Constraint
-{
+class PosConstraint : public Constraint {
 protected:
 	void UpdateTransform(Transform2& transform, float pos) const;
 	float GetScaleComponent(Transform2& transform) const;
 public:
 	PosConstraint(float value, bool isRelative = false) :
-		Constraint(value, isRelative)
-	{ }
+		Constraint(value, isRelative) { }
 };
 #define pos_constraint(constraint) std::shared_ptr<PosConstraint>(new constraint)
 
-class ScaleConstraint : public Constraint
-{
+class ScaleConstraint : public Constraint {
 protected:
 	void UpdateTransform(Transform2& transform, float scale) const;
 	float GetPosComponent(Transform2& transform) const;
@@ -357,21 +308,19 @@ public:
 		Constraint(value, isRelative)
 	{ }
 };
-#define scale_constraint(constraint) std::shared_ptr<ScaleConstraint>(new constraint)
 
+#define scale_constraint(constraint) std::shared_ptr<ScaleConstraint>(new constraint)
 #define all_constraints(posConstraintX, posConstraintY, scaleConstraintX, scaleConstraintY) pos_constraint(posConstraintX), pos_constraint(posConstraintY), scale_constraint(scaleConstraintX), scale_constraint(scaleConstraintY)
 
 // TODO: Need copy constructor
-class Transform2 : public TTransform<Transform2>
-{
+class Transform2 : public TTransform<Transform2> {
 	friend class TGameObject<Transform2>;
 
 	friend class Constraint;
 	friend class PosConstraint;
 	friend class ScaleConstraint;
 public:
-	struct SeperatedData
-	{
+	struct SeperatedData {
 		FMatrix3x3 matrix;
 		std::shared_ptr<PosConstraint> xConstraint, yConstraint;
 		std::shared_ptr<ScaleConstraint> widthConstraint, heightConstraint;
@@ -381,8 +330,7 @@ public:
 			xConstraint(xConstraint),
 			yConstraint(yConstraint),
 			widthConstraint(widthConstraint),
-			heightConstraint(heightConstraint)
-		{ }
+			heightConstraint(heightConstraint) { }
 	};
 private:
 	static MemoryPool<SeperatedData> seperatedDatas;
@@ -402,8 +350,7 @@ public:
 		rotation(rotation),
 		texInfo(texInfo),
 		ownsAllocation(true),
-		seperatedData(seperatedDatas.alloc(nullptr, nullptr, nullptr, nullptr))
-	{ }
+		seperatedData(seperatedDatas.alloc(nullptr, nullptr, nullptr, nullptr)) { }
 
 	Transform2(std::shared_ptr<PosConstraint> xConstraint, std::shared_ptr<PosConstraint> yConstraint, std::shared_ptr<ScaleConstraint> widthConstraint, std::shared_ptr<ScaleConstraint> heightConstraint) :
 		position(FVector2(0.0F, 0.0F)),
@@ -411,16 +358,14 @@ public:
 		rotation(0.0F),
 		texInfo(FVector4(0.0F, 0.0F, 1.0F, 1.0F)),
 		ownsAllocation(true),
-		seperatedData(seperatedDatas.alloc(xConstraint, yConstraint, widthConstraint, heightConstraint))
-	{
+		seperatedData(seperatedDatas.alloc(xConstraint, yConstraint, widthConstraint, heightConstraint)) {
 		if (yConstraint != nullptr)
 			yConstraint->component = 1;
 		if (heightConstraint != nullptr)
 			heightConstraint->component = 1;
 	}
 
-	Transform2& WithConstraints(std::shared_ptr<PosConstraint> xConstraint, std::shared_ptr<PosConstraint> yConstraint, std::shared_ptr<ScaleConstraint> widthConstraint, std::shared_ptr<ScaleConstraint> heightConstraint)
-	{
+	Transform2& WithConstraints(std::shared_ptr<PosConstraint> xConstraint, std::shared_ptr<PosConstraint> yConstraint, std::shared_ptr<ScaleConstraint> widthConstraint, std::shared_ptr<ScaleConstraint> heightConstraint) {
 		if (yConstraint != nullptr)
 			yConstraint->component = 1;
 		if (heightConstraint != nullptr)
@@ -436,22 +381,17 @@ public:
 		return *this;
 	}
 
-	Transform2& WithXConstraint(std::shared_ptr<PosConstraint> constraint)
-	{
+	Transform2& WithXConstraint(std::shared_ptr<PosConstraint> constraint) {
 		seperatedData->xConstraint = constraint;
-
 		return *this;
 	}
 
-	Transform2& WithXConstraint(std::shared_ptr<ScaleConstraint> constraint)
-	{
-		seperatedData->widthConstraint = constraint;
-
+	Transform2& WithXConstraint(std::shared_ptr<ScaleConstraint> constraint) {
+		seperatedData->widthConstraint = constraint; 
 		return *this;
 	}
 
-	Transform2& WithYConstraint(std::shared_ptr<PosConstraint> constraint)
-	{
+	Transform2& WithYConstraint(std::shared_ptr<PosConstraint> constraint) {
 		if (constraint != nullptr)
 			constraint->component = 1;
 
@@ -460,8 +400,7 @@ public:
 		return *this;
 	}
 
-	Transform2& WithYConstraint(std::shared_ptr<ScaleConstraint> constraint)
-	{
+	Transform2& WithYConstraint(std::shared_ptr<ScaleConstraint> constraint) {
 		if (constraint != nullptr)
 			constraint->component = 1;
 
@@ -470,8 +409,7 @@ public:
 		return *this;
 	}
 
-	Transform2& operator=(const Transform2& other)
-	{
+	Transform2& operator=(const Transform2& other) {
 		MakeDirty();
 
 		position = other.position;
@@ -486,8 +424,7 @@ public:
 		return *this;
 	}
 
-	void PairAllocation(SeperatedData* seperatedData)
-	{
+	void PairAllocation(SeperatedData* seperatedData) {
 		assert(ownsAllocation);
 
 		memcpy(seperatedData, this->seperatedData, sizeof(SeperatedData));
@@ -496,8 +433,7 @@ public:
 		ownsAllocation = false;
 	}
 
-	void UnpairAllocation()
-	{
+	void UnpairAllocation() {
 		assert(!ownsAllocation);
 
 		SeperatedData* newSeperatedData = seperatedDatas.alloc(seperatedData->xConstraint, seperatedData->yConstraint, seperatedData->widthConstraint, seperatedData->heightConstraint);
@@ -506,83 +442,69 @@ public:
 		ownsAllocation = true;
 	}
 
-	inline const FVector2& GetPosition() const
-	{
+	inline const FVector2& GetPosition() const {
 		return position;
 	}
 
-	inline void SetPosition(const FVector2& position)
-	{
+	inline void SetPosition(const FVector2& position) {
 		MakeDirty();
 		this->position = position;
 	}
 
-	inline void ChangePosition(const FVector2& change)
-	{
+	inline void ChangePosition(const FVector2& change) {
 		MakeDirty();
 		this->position += change;
 	}
 
-	inline const FVector2& GetScale() const
-	{
+	inline const FVector2& GetScale() const {
 		return scale;
 	}
 
-	inline void SetScale(const FVector2& scale)
-	{
+	inline void SetScale(const FVector2& scale) {
 		MakeDirty();
 		this->scale = scale;
 	}
 
-	inline float GetRotation() const
-	{
+	inline float GetRotation() const {
 		return rotation;
 	}
 
-	inline void SetRotation(float rotation)
-	{
+	inline void SetRotation(float rotation) {
 		MakeDirty();
 		this->rotation = rotation;
 	}
 
-	inline void ChangeRotation(float change)
-	{
+	inline void ChangeRotation(float change) {
 		MakeDirty();
 		this->rotation += change;
 	}
 
-	inline const FVector4& GetTexInfo() const
-	{
+	inline const FVector4& GetTexInfo() const {
 		return texInfo;
 	}
 
-	inline void SetTexInfoBox(const FVector2& pos, const FVector2& scale)
-	{
+	inline void SetTexInfoBox(const FVector2& pos, const FVector2& scale) {
 		this->texInfo.x = pos.x;
 		this->texInfo.y = pos.y;
 		this->texInfo.z = scale.x;
 		this->texInfo.w = scale.y;
 	}
 
-	inline void SetTexInfoBounds(const FVector2& upperLeft, const FVector2& lowerRight)
-	{
+	inline void SetTexInfoBounds(const FVector2& upperLeft, const FVector2& lowerRight) {
 		this->texInfo.x = upperLeft.x;
 		this->texInfo.y = upperLeft.y;
 		this->texInfo.z = lowerRight.x - upperLeft.x;
 		this->texInfo.w = lowerRight.y - upperLeft.y;
 	}
 
-	inline void SetTexInfo(const FVector4& texInfo)
-	{
+	inline void SetTexInfo(const FVector4& texInfo) {
 		this->texInfo = texInfo;
 	}
 
-	const FMatrix3x3& GetMatrix()
-	{
+	const FMatrix3x3& GetMatrix() {
 		FMatrix3x3& matrix = seperatedData->matrix;
 
-		if (isDirty)
-		{
+		if (isDirty) {
 			if (parent != nullptr)
 				matrix = parent->GetMatrix();
 			else
@@ -606,8 +528,7 @@ public:
 			temp[2][0] = position.x;
 			temp[2][1] = position.y;
 			matrix *= temp;
-			if (rotation != 0.0F)
-			{
+			if (rotation != 0.0F) {
 				temp = FLOAT_MAT3_IDENTITY;
 				float c = cosf(rotation);
 				float s = sinf(rotation);
@@ -628,40 +549,33 @@ public:
 	}
 };
 
-class CenterPosConstraint : public PosConstraint
-{
+class CenterPosConstraint : public PosConstraint {
 public:
 	CenterPosConstraint(float offset = 0.0F, bool isRelative = false) :
-		PosConstraint(offset, isRelative)
-	{ }
+		PosConstraint(offset, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
 // TODO: Should work with transform pointers as well
-class LesserEdgePosConstraint : public PosConstraint
-{
+class LesserEdgePosConstraint : public PosConstraint {
 public:
 	LesserEdgePosConstraint(float offset = 0.0F, bool isRelative = false) :
-		PosConstraint(offset, isRelative)
-	{ }
+		PosConstraint(offset, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class GreaterEdgePosConstraint : public PosConstraint
-{
+class GreaterEdgePosConstraint : public PosConstraint {
 public:
 	GreaterEdgePosConstraint(float offset = 0.0F, bool isRelative = false) :
-		PosConstraint(offset, isRelative)
-	{ }
+		PosConstraint(offset, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
 // TODO: Doesn't work at all
-class DualEdgePosConstraint : public PosConstraint
-{
+class DualEdgePosConstraint : public PosConstraint {
 private:
 	Transform2* lesserEdge;
 	Transform2* greaterEdge;
@@ -669,70 +583,58 @@ public:
 	DualEdgePosConstraint(Transform2* lesserEdge, Transform2* greaterEdge) :
 		PosConstraint(0.0F, true),
 		lesserEdge(lesserEdge),
-		greaterEdge(greaterEdge)
-	{ }
+		greaterEdge(greaterEdge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class SpecificLesserEdgePosConstraint : public PosConstraint
-{
+class SpecificLesserEdgePosConstraint : public PosConstraint {
 private:
 	Transform2* edge;
 public:
 	SpecificLesserEdgePosConstraint(Transform2* edge, float offset = 0.0F, bool isRelative = false) :
 		PosConstraint(offset, isRelative),
-		edge(edge)
-	{ }
+		edge(edge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class SpecificGreaterEdgePosConstraint : public PosConstraint
-{
+class SpecificGreaterEdgePosConstraint : public PosConstraint {
 private:
 	Transform2* edge;
 public:
 	SpecificGreaterEdgePosConstraint(Transform2* edge, float offset = 0.0F, bool isRelative = false) :
 		PosConstraint(offset, isRelative),
-		edge(edge)
-	{ }
+		edge(edge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class CenterScaleConstraint : public ScaleConstraint
-{
+class CenterScaleConstraint : public ScaleConstraint {
 public:
 	CenterScaleConstraint(float size, bool isRelative = false) :
-		ScaleConstraint(size, isRelative)
-	{ }
+		ScaleConstraint(size, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class LesserEdgeScaleConstraint : public ScaleConstraint
-{
+class LesserEdgeScaleConstraint : public ScaleConstraint {
 public:
 	LesserEdgeScaleConstraint(float border = 0.0F, bool isRelative = false) :
-		ScaleConstraint(border, isRelative)
-	{ }
+		ScaleConstraint(border, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class GreaterEdgeScaleConstraint : public ScaleConstraint
-{
+class GreaterEdgeScaleConstraint : public ScaleConstraint {
 public:
 	GreaterEdgeScaleConstraint(float border = 0.0F, bool isRelative = false) :
-		ScaleConstraint(border, isRelative)
-	{ }
+		ScaleConstraint(border, isRelative) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class DualEdgeScaleConstraint : public ScaleConstraint
-{
+class DualEdgeScaleConstraint : public ScaleConstraint {
 private:
 	Transform2* lesserEdge;
 	Transform2* greaterEdge;
@@ -740,44 +642,37 @@ public:
 	DualEdgeScaleConstraint(Transform2* lesserEdge, Transform2* greaterEdge, float border = 0.0F, bool isRelative = false) :
 		ScaleConstraint(border, isRelative),
 		lesserEdge(lesserEdge),
-		greaterEdge(greaterEdge)
-	{ }
+		greaterEdge(greaterEdge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class SpecificLesserEdgeScaleConstraint : public ScaleConstraint
-{
+class SpecificLesserEdgeScaleConstraint : public ScaleConstraint {
 private:
 	Transform2* edge;
 public:
 	SpecificLesserEdgeScaleConstraint(Transform2* edge, float border = 0.0F, bool isRelative = false) :
 		ScaleConstraint(border, isRelative),
-		edge(edge)
-	{ }
+		edge(edge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class SpecificGreaterEdgeScaleConstraint : public ScaleConstraint
-{
+class SpecificGreaterEdgeScaleConstraint : public ScaleConstraint {
 private:
 	Transform2* edge;
 public:
 	SpecificGreaterEdgeScaleConstraint(Transform2* edge, float border = 0.0F, bool isRelative = false) :
 		ScaleConstraint(border, isRelative),
-		edge(edge)
-	{ }
+		edge(edge) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };
 
-class AspectRatioScaleConstraint : public ScaleConstraint
-{
+class AspectRatioScaleConstraint : public ScaleConstraint {
 public:
 	AspectRatioScaleConstraint(float aspectRatio) :
-		ScaleConstraint(aspectRatio, true)
-	{ }
+		ScaleConstraint(aspectRatio, true) { }
 
 	void EnforceValidity(Transform2& transform) const override;
 };

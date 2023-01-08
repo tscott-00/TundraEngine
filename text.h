@@ -2,11 +2,9 @@
 
 #include "ui.h"
 
-class Font
-{
+class Font {
 public:
-	struct Character
-	{
+	struct Character {
 		FVector4 texCoords;
 		FVector2 quadSize;
 		FVector2 offsetFromCursor;
@@ -27,11 +25,9 @@ public:
 	no_transfer_functions(Font)
 };
 
-class TextRenderComponent2 : public RenderComponent2
-{
+class TextRenderComponent2 : public RenderComponent2 {
 private:
-	class MySpecialState : public SpecialState
-	{
+	class MySpecialState : public SpecialState {
 	private:
 		TextRenderComponent2* component;
 	public:
@@ -69,15 +65,13 @@ public:
 
 	~TextRenderComponent2();
 
-	inline int GetCharacterSize() const
-	{
+	inline int GetCharacterSize() const	{
 		return characterSize;
 	}
 
 	void SetCharacterSize(int characterSize);
 
-	inline const std::string& GetText() const
-	{
+	inline const std::string& GetText() const {
 		return str;
 	}
 

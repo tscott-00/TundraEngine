@@ -2,8 +2,7 @@
 
 #include <SDL2/SDL.h>
 
-namespace Input
-{
+namespace Input {
 	const unsigned int LEFT_MOUSE_BUTTON = 0;
 	const unsigned int MIDDLE_MOUSE_BUTTON = 1;
 	const unsigned int RIGHT_MOUSE_BUTTON = 2;

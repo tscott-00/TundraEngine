@@ -4,8 +4,7 @@
 
 // Animated particle systems are single-use. The animations will not play properly if the system is used between multiple active objects.
 // TODO: Could actually have a different class do animations and only allow one instance of the system in the list (hash of system ptr to int count)
-class BillboardParticleSystem : public Component3
-{
+class BillboardParticleSystem : public Component3 {
 	friend class BillboardParticleRenderProcess;
 private:
 	Texture2D texture;
@@ -17,13 +16,11 @@ private:
 	float fadeStart;
 	float fadeEnd;
 public:
-	class Animation
-	{
+	class Animation {
 
 	};
 
-	struct ParticleData
-	{
+	struct ParticleData {
 		FVector4 positionAndScale;
 		FColor color;
 		FVector4 subTexCoords;
@@ -47,8 +44,7 @@ public:
 	cant_copy(BillboardParticleSystem);
 };
 
-class BillboardParticleRenderProcess : public RenderingOpaqueProcess3
-{
+class BillboardParticleRenderProcess : public RenderingOpaqueProcess3 {
 private:
 	const Shader shader;
 	std::unordered_map<Texture2D, std::list<BillboardParticleSystem*>> particleSystems;

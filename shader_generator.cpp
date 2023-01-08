@@ -1,5 +1,7 @@
 #include "shader_generator.h"
 
+// TODO: Replace with shader macro / compiler option system!
+
 /*
 std::string shader = "";
 

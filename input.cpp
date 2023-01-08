@@ -1,30 +1,24 @@
 #include "input.h"
 #include "events_state.h"
 
-namespace Input
-{
-	bool IsButtonDown(unsigned int button)
-	{
+namespace Input {
+	bool IsButtonDown(unsigned int button) {
 		return EventsState::mouseButtonStates[button];
 	}
 
-	bool WasButtonPressed(unsigned int button)
-	{
+	bool WasButtonPressed(unsigned int button) {
 		return EventsState::pressedMouseButtons[button];
 	}
 
-	bool WasButtonReleased(unsigned int button)
-	{
+	bool WasButtonReleased(unsigned int button) {
 		return EventsState::releasedMouseButtons[button];
 	}
 
-	bool IsKeyDown(SDL_Scancode key)
-	{
+	bool IsKeyDown(SDL_Scancode key) {
 		return EventsState::keyStates[key];
 	}
 
-	bool WasKeyPressed(SDL_Scancode key)
-	{
+	bool WasKeyPressed(SDL_Scancode key) {
 		for (SDL_Scancode pressedKey : EventsState::pressedKeys)
 			if (key == pressedKey)
 				return true;
@@ -32,8 +26,7 @@ namespace Input
 		return false;
 	}
 
-	bool WasKeyReleased(SDL_Scancode key)
-	{
+	bool WasKeyReleased(SDL_Scancode key) {
 		for (SDL_Scancode releasedKey : EventsState::releasedKeys)
 			if (key == releasedKey)
 				return true;

@@ -1,7 +1,6 @@
 #include "camera.h"
 
-void Camera3::Plane::SetCoefficients(real a, real b, real c, real d)
-{
+void Camera3::Plane::SetCoefficients(real a, real b, real c, real d) {
 	real l = glm::length(RVector3(a, b, c));
 	normal = RVector3(a / l, b / l, c / l);
 	this->d = d / l;
@@ -25,13 +24,11 @@ Camera3::Camera3(const Camera3& other) :
 	viewRotationMatrix(other.viewRotationMatrix)
 { }
 
-void Camera3::OnCreate()
-{
+void Camera3::OnCreate() {
 	RefreshFrustum();
 }
 
-void Camera3::Adjust(real fov, real aspect, real zNear, real zFar)
-{
+void Camera3::Adjust(real fov, real aspect, real zNear, real zFar) {
 	this->fov = fov;
 	this->aspect = aspect;
 	this->zNear = zNear;
@@ -39,15 +36,13 @@ void Camera3::Adjust(real fov, real aspect, real zNear, real zFar)
 	projectionMatrix = CreateMatrix::Projection(fov, aspect, zNear, zFar);
 }
 
-void Camera3::Adjust(real zNear, real zFar)
-{
+void Camera3::Adjust(real zNear, real zFar) {
 	this->zNear = zNear;
 	this->zFar = zFar;
 	projectionMatrix = CreateMatrix::Projection(fov, aspect, zNear, zFar);
 }
 
-void Camera3::RefreshFrustum()
-{
+void Camera3::RefreshFrustum() {
 	RMatrix4x4 PVMatrix = GetProjectionViewMatrix();
 
 	planes[Planes::LEFT].SetCoefficients(

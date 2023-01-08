@@ -1,10 +1,9 @@
 #pragma once
-namespace Internal
-{
-	struct GameProcess
-	{
-		enum Priority
-		{
+
+// TODO: Is this actually used anywhere anymore?
+namespace Internal {
+	struct GameProcess {
+		enum Priority {
 			EARLY,
 			LATE,
 

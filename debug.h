@@ -2,10 +2,8 @@
 
 #include <string>
 
-namespace Console
-{
-	enum QuitMode
-	{
+namespace Console {
+	enum QuitMode {
 		DO_NOT_QUIT,
 		UNSAFE_QUIT,
 		FORCE_QUIT

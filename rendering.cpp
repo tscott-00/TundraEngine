@@ -40,16 +40,14 @@ DirectionalLightComponent3::DirectionalLightComponent3(const DirectionalLightCom
 	color(other.color)
 { }
 
-void DirectionalLightComponent3::OnEnable()
-{
+void DirectionalLightComponent3::OnEnable() {
 	if (Internal::Storage::RenderingObj::directionalLight == nullptr)
 		Internal::Storage::RenderingObj::directionalLight = this;
 	else
 		Console::Error("Only one directional light can be enabled at any given time");
 }
 
-void DirectionalLightComponent3::OnDisable()
-{
+void DirectionalLightComponent3::OnDisable() {
 	if (Internal::Storage::RenderingObj::directionalLight == this)
 		Internal::Storage::RenderingObj::directionalLight = nullptr;
 }
@@ -57,6 +55,7 @@ void DirectionalLightComponent3::OnDisable()
 ObjectRenderingProcess3::ObjectRenderingProcess3(Type type) :
 	type(type), canRenderToEnvironmentMap(true), auxCameraNear(NAN), auxCameraFar(NAN)
 { }
+
 ObjectRenderingProcess3::~ObjectRenderingProcess3() { }
 
 ObjectCollection::ObjectCollection() :
@@ -67,51 +66,38 @@ ObjectCollection::ObjectCollection() :
 ObjectCollection::ObjectCollection(ObjectCollection&& other) :
 	objects(std::move(other.objects)),
 	attributeSSBO(other.attributeSSBO),
-	attributeSSBOByteCapacity(other.attributeSSBOByteCapacity)
-{
+	attributeSSBOByteCapacity(other.attributeSSBOByteCapacity) {
 	other.attributeSSBO = 0;
 	other.attributeSSBOByteCapacity = 0;
 }
 
-ObjectCollection::~ObjectCollection()
-{
+ObjectCollection::~ObjectCollection() {
 	if (attributeSSBO != 0)
 		glDeleteBuffers(1, &attributeSSBO);
 }
 
-void ObjectCollection::RefreshSSBO(const void* data, GLsizei dataBytes)
-{
-	if (attributeSSBO == 0)
-	{
+void ObjectCollection::RefreshSSBO(const void* data, GLsizei dataBytes) {
+	if (attributeSSBO == 0) {
 		glGenBuffers(1, &attributeSSBO);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, attributeSSBO);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, dataBytes, data, GL_DYNAMIC_DRAW);
 		attributeSSBOByteCapacity = dataBytes;
-		//std::cerr << "creating new buffer of size " << dataBytes << std::endl;
-	}
-	else
-	{
-		if (dataBytes <= attributeSSBOByteCapacity)
-		{
+	} else {
+		if (dataBytes <= attributeSSBOByteCapacity) {
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, attributeSSBO);
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, dataBytes, data);
-			//std::cerr << "sub new buffer of size " << dataBytes << std::endl;
-		}
-		else
-		{
+		} else {
 			glDeleteBuffers(1, &attributeSSBO);
 
 			glGenBuffers(1, &attributeSSBO);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, attributeSSBO);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, dataBytes, data, GL_DYNAMIC_DRAW);
 			attributeSSBOByteCapacity = dataBytes;
-			//std::cerr << "recreating a buffer of size " << dataBytes << std::endl;
 		}
 	}
 }
 
-ObjectCollection& ObjectCollection::operator=(ObjectCollection&& other)
-{
+ObjectCollection& ObjectCollection::operator=(ObjectCollection&& other) {
 	objects = std::move(other.objects);
 	attributeSSBO = other.attributeSSBO;
 	attributeSSBOByteCapacity = other.attributeSSBOByteCapacity;
@@ -139,22 +125,19 @@ RenderComponent3::RenderComponent3(const RenderComponent3& other) :
 	overrideCheck(other.overrideCheck)
 { }
 
-void RenderComponent3::OnEnable()
-{
+void RenderComponent3::OnEnable() {
 	if (!Internal::Storage::Rendering::isDead && ((overrideCheck || mesh.IsLoaded()) && material != nullptr))
 		for (ObjectRenderingProcess3* process : *(material->process))
 			process->AddObject(*this);
 }
 
-void RenderComponent3::OnDisable()
-{
+void RenderComponent3::OnDisable() {
 	if (!Internal::Storage::Rendering::isDead && ((overrideCheck || mesh.IsLoaded()) && material != nullptr))
 		for (ObjectRenderingProcess3* process : *(material->process))
 			process->RemoveObject(*this);
 }
 
-void RenderComponent3::SetMesh(const Mesh& mesh)
-{
+void RenderComponent3::SetMesh(const Mesh& mesh) {
 	bool enabled = this->gameObject->IsEnabled();
 	if (enabled)
 		OnDisable();
@@ -163,8 +146,7 @@ void RenderComponent3::SetMesh(const Mesh& mesh)
 		OnEnable();
 }
 
-void RenderComponent3::SetMaterial(const std::shared_ptr<Material3>& material)
-{
+void RenderComponent3::SetMaterial(const std::shared_ptr<Material3>& material) {
 	bool enabled = this->gameObject->IsEnabled();
 	if (enabled)
 		OnDisable();
@@ -173,8 +155,7 @@ void RenderComponent3::SetMaterial(const std::shared_ptr<Material3>& material)
 		OnEnable();
 }
 
-void RenderComponent3::SetMeshAndMaterial(const Mesh& mesh, const std::shared_ptr<Material3>& material)
-{
+void RenderComponent3::SetMeshAndMaterial(const Mesh& mesh, const std::shared_ptr<Material3>& material) {
 	bool enabled = this->gameObject->IsEnabled();
 	if (enabled)
 		OnDisable();
@@ -184,8 +165,7 @@ void RenderComponent3::SetMeshAndMaterial(const Mesh& mesh, const std::shared_pt
 		OnEnable();
 }
 
-RenderComponent3& RenderComponent3::operator=(const RenderComponent3& other)
-{
+RenderComponent3& RenderComponent3::operator=(const RenderComponent3& other) {
 	bool enabled = gameObject->IsEnabled();
 	if (enabled)
 		OnDisable();
@@ -198,12 +178,10 @@ RenderComponent3& RenderComponent3::operator=(const RenderComponent3& other)
 }
 
 RenderingOpaqueProcess3::RenderingOpaqueProcess3() :
-	ObjectRenderingProcess3(ObjectRenderingProcess3::Type::OPAQUE)
-{ }
+	ObjectRenderingProcess3(ObjectRenderingProcess3::Type::OPAQUE) { }
 
 RenderingInfluencedProcess::RenderingInfluencedProcess(bool usesRefractions, bool usesReflections) :
-	ObjectRenderingProcess3(Type::INFLUENCED)
-{
+	ObjectRenderingProcess3(Type::INFLUENCED) {
 	requestNum = 0;
 	if (usesRefractions)
 		requestNum += 0b0000001;
@@ -218,8 +196,7 @@ SkyboxRenderingProcess3::SkyboxRenderingProcess3(const Cubemap& cubemap) :
 	cubemap(cubemap)
 { }
 
-void SkyboxRenderingProcess3::Run(const RMatrix4x4& projectionView, const Camera3* camera)
-{
+void SkyboxRenderingProcess3::Run(const RMatrix4x4& projectionView, const Camera3* camera) {
 	shader.Bind();
 	Internal::Storage::Rendering::skyboxMesh.Bind();
 	cubemap.Bind(0);
@@ -228,40 +205,23 @@ void SkyboxRenderingProcess3::Run(const RMatrix4x4& projectionView, const Camera
 	Internal::Storage::Rendering::skyboxMesh.DrawArrays();
 }
 
-namespace Internal
-{
-	namespace Rendering
-	{
-		void RegisterProcess(const std::string& name, const std::vector<ObjectRenderingProcess3*>& process)
-		{
+namespace Internal {
+	namespace Rendering {
+		void RegisterProcess(const std::string& name, const std::vector<ObjectRenderingProcess3*>& process) {
 			Internal::Storage::RenderingObj::processRegistry[name] = process;
 			for (ObjectRenderingProcess3* p : process)
 				Internal::Storage::RenderingObj::processes[p->type].push_back(p);
 		}
 
-		void RegisterProcess(const std::string& name, RenderingPostProcess3* process)
-		{
+		void RegisterProcess(const std::string& name, RenderingPostProcess3* process) {
 			Internal::Storage::Rendering::postProcessRegistry[name] = process;
 			Internal::Storage::Rendering::postProcessArray.push_back(process);
 		}
 
-		void Init(int width, int height)
-		{
+		void Init(int width, int height) {
 			// color0, color1 can be xyz
-			//std::cerr << glGetError << std::endl;
-			/*Texture2D renderBufferTextures[5] = {
-			Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGB16))),
-			Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGB16))),
-			Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGBA16))),
-			Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RG8))),
-			Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGB16F)))
-			};
-			Internal::Storage::Rendering::renderBuffer.Reload(&renderBufferTextures[0], 5, width, height, true);*/
-
-			Texture2D renderBufferTextures[1] = {
-				Texture2D(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGB16F)))
-			};
-			Internal::Storage::Rendering::renderBuffer.Reload(&renderBufferTextures[0], 1, width, height, false);
+			Texture2D renderBufferTexture(Texture2D::Descriptor(Texture2D::Descriptor::Image(width, height, GL_RGB16F)));
+			Internal::Storage::Rendering::renderBuffer.Reload(&renderBufferTexture, 1, width, height, false);
 			Internal::Storage::Rendering::renderBuffer.Bind();
 			Internal::Storage::Rendering::renderBuffer.AttachDepthStencilTexture();
 			Internal::Storage::Rendering::renderBuffer.rtc_GetDepthStencilTexture().Bind();
@@ -304,15 +264,13 @@ namespace Internal
 			Internal::Storage::Rendering::influencedReflectionShader = Shader("Internal/Shaders/reflection");
 
 			// TODO: CCW?
-			FVector2 quadPositions[] =
-			{
+			FVector2 quadPositions[] = {
 				FVector2(-1.0F,1.0F),
 				FVector2(1.0F,1.0F),
 				FVector2(-1.0F,-1.0F),
 				FVector2(1.0F,-1.0F)
 			};
-			FVector2 quadTexCoords[] =
-			{
+			FVector2 quadTexCoords[] = {
 				FVector2(0.0F,1.0F),
 				FVector2(1.0F,1.0F),
 				FVector2(0.0F,0.0F),
@@ -320,8 +278,7 @@ namespace Internal
 			};
 			Internal::Storage::Rendering::quadMesh = Mesh(Mesh::Descriptor(sizeof(quadPositions) / sizeof(quadPositions[0])).AddArray(quadPositions).AddArray(quadTexCoords));
 
-			FVector3 skyboxVertices[] =
-			{
+			FVector3 skyboxVertices[] = {
 				FVector3(-1.0F,  1.0F, -1.0F),
 				FVector3(-1.0F, -1.0F, -1.0F),
 				FVector3(1.0F, -1.0F, -1.0F),
@@ -387,8 +344,7 @@ namespace Internal
 
 			glViewport(0, 0, 1, 1);
 			glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-			for (unsigned int i = 0; i < 6; ++i)
-			{
+			for (unsigned int i = 0; i < 6; ++i) {
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, Internal::Storage::Rendering::defaultCubemap.rtc_GetID(), 0);
 				glClear(GL_COLOR_BUFFER_BIT);
 			}
@@ -396,10 +352,8 @@ namespace Internal
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		}
 
-		void Clear()
-		{
-			for (unsigned int i = 0; i < ObjectRenderingProcess3::Type::COUNT; ++i)
-			{
+		void Clear() {
+			for (unsigned int i = 0; i < ObjectRenderingProcess3::Type::COUNT; ++i) {
 				for (ObjectRenderingProcess3* process : Internal::Storage::RenderingObj::processes[i])
 					delete process;
 				Internal::Storage::RenderingObj::processes[i].clear();
@@ -413,12 +367,9 @@ namespace Internal
 	}
 }
 
-namespace Scene
-{
-	void Render(const Camera3* camera, const Cubemap& skybox)
-	{
-		if (Internal::Storage::Rendering::isRenderingScene)
-		{
+namespace Scene {
+	void Render(const Camera3* camera, const Cubemap& skybox) {
+		if (Internal::Storage::Rendering::isRenderingScene) {
 			std::cerr << "Scene render must be complete before another pass is started..." << std::endl;
 			return;
 		}
@@ -455,8 +406,7 @@ namespace Scene
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glDepthMask(false);
 		Internal::Storage::Rendering::renderBuffer.rtc_GetDepthStencilTexture().Bind(1); // TODO: Should be passing this
-		for (ObjectRenderingProcess3* influencedProcess : Internal::Storage::RenderingObj::processes[ObjectRenderingProcess3::Type::INFLUENCED])
-		{
+		for (ObjectRenderingProcess3* influencedProcess : Internal::Storage::RenderingObj::processes[ObjectRenderingProcess3::Type::INFLUENCED]) {
 			RenderingInfluencedProcess* cast = dynamic_cast<RenderingInfluencedProcess*>(influencedProcess);
 			glStencilFunc(GL_ALWAYS, cast->requestNum, 0xFF);
 			cast->RunDataPass(projectionView, camera);
@@ -491,8 +441,7 @@ namespace Scene
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_STENCIL_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		for (ObjectRenderingProcess3* influencedProcess : Internal::Storage::RenderingObj::processes[ObjectRenderingProcess3::Type::INFLUENCED])
-		{
+		for (ObjectRenderingProcess3* influencedProcess : Internal::Storage::RenderingObj::processes[ObjectRenderingProcess3::Type::INFLUENCED]) {
 			RenderingInfluencedProcess* cast = dynamic_cast<RenderingInfluencedProcess*>(influencedProcess);
 			glStencilFunc(GL_EQUAL, cast->requestNum, 0xFF);
 			cast->Run(projectionView, camera, Internal::Storage::Rendering::screenInfluencedRefractionTexture, Internal::Storage::Rendering::screenInfluencedReflectionTexture);
@@ -513,10 +462,8 @@ namespace Scene
 	}
 
 	// TODO: Incomplete
-	void Render(const Camera3* camera, const FBO& finalFbo)
-	{
-		if (Internal::Storage::Rendering::isRenderingScene)
-		{
+	void Render(const Camera3* camera, const FBO& finalFbo) {
+		if (Internal::Storage::Rendering::isRenderingScene) {
 			std::cerr << "Scene render must be complete before another pass is started..." << std::endl;
 			return;
 		}
@@ -555,14 +502,12 @@ namespace Scene
 		Internal::Storage::Rendering::isRenderingScene = false;
 	}
 
-	void ConductProbe(const Transform3& location, const Cubemap& environmentMap)
-	{
+	void ConductProbe(const Transform3& location, const Cubemap& environmentMap) {
 		GameObject3* cameraObj = Instantiate<GameObject3>(Transform3(location.GetWorldPosition()));
 		cameraObj->AddComponent<Camera3>(static_cast<real>(90.0), static_cast<real>(1.0), static_cast<real>(0.1), static_cast<real>(1000.0));
 		Camera3* camera = cameraObj->GetComponent<Camera3>();
 
-		RMatrix4x4 viewDirs[] =
-		{
+		RMatrix4x4 viewDirs[] = {
 			CreateMatrix::LookAt(RVector3(REAL_ZERO, REAL_ZERO, REAL_ZERO), RVector3(REAL_ONE, REAL_ZERO, REAL_ZERO), RVector3(REAL_ZERO, -REAL_ONE, REAL_ZERO)),
 			CreateMatrix::LookAt(RVector3(REAL_ZERO, REAL_ZERO, REAL_ZERO), RVector3(-REAL_ONE, REAL_ZERO, REAL_ZERO), RVector3(REAL_ZERO, -REAL_ONE, REAL_ZERO)),
 			CreateMatrix::LookAt(RVector3(REAL_ZERO, REAL_ZERO, REAL_ZERO), RVector3(REAL_ZERO, REAL_ONE, REAL_ZERO), RVector3(REAL_ZERO, REAL_ZERO, REAL_ONE)),
@@ -579,16 +524,13 @@ namespace Scene
 
 		Internal::Storage::Rendering::envMapFBO.Bind();
 
-		//std::cerr << Internal::Storage::Rendering::envMapFBO.rtc_GetID() << std::endl;
-		for (unsigned int i = 0; i < 6; ++i)
-		{
+		for (unsigned int i = 0; i < 6; ++i) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, environmentMap.rtc_GetID(), 0);
 
 			glClear(GL_DEPTH_BUFFER_BIT);
 
 			camera->SetViewRotationMatrix(viewDirs[i]);
 			RMatrix4x4 projectionView = camera->GetProjectionViewMatrix();
-			//std::cerr << glm::to_string(projectionView) << std::endl;
 
 			for (ObjectRenderingProcess3* opaqueProcess : Internal::Storage::RenderingObj::processes[ObjectRenderingProcess3::Type::OPAQUE])
 				if (opaqueProcess->canRenderToEnvironmentMap)
@@ -602,11 +544,9 @@ namespace Scene
 		Internal::Storage::Rendering::envMapFBO.Unbind();
 	}
 
-	void ComputeIrradiance(const Cubemap& environmentMap, const Cubemap& irradianceMap)
-	{
+	void ComputeIrradiance(const Cubemap& environmentMap, const Cubemap& irradianceMap) {
 		FMatrix4x4 projection = CreateMatrix::Projection(90.0F, 1.0F, 0.1F, 10.0F);
-		FMatrix4x4 viewDirs[] =
-		{
+		FMatrix4x4 viewDirs[] = {
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(1.0F, 0.0F, 0.0F), FVector3(0.0F, -1.0F, 0.0F)),
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(-1.0F, 0.0F, 0.0F), FVector3(0.0F, -1.0F, 0.0F)),
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(0.0F, 1.0F, 0.0F), FVector3(0.0F, 0.0F, 1.0F)),
@@ -625,8 +565,7 @@ namespace Scene
 		Internal::Storage::Rendering::skyboxMesh.Bind();
 		environmentMap.Bind(0);
 
-		for (unsigned int i = 0; i < 6; ++i)
-		{
+		for (unsigned int i = 0; i < 6; ++i) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap.rtc_GetID(), 0);
 
 			Shader::LoadMatrix4x4(0, projection * viewDirs[i]);
@@ -636,11 +575,9 @@ namespace Scene
 		}
 	}
 
-	void ComputePrefilteredEnvironmentMap(const Cubemap& environmentMap, const Cubemap& prefilteredEnvironmentMap)
-	{
+	void ComputePrefilteredEnvironmentMap(const Cubemap& environmentMap, const Cubemap& prefilteredEnvironmentMap) {
 		FMatrix4x4 projection = CreateMatrix::Projection(90.0F, 1.0F, 0.1F, 1000.0F);
-		FMatrix4x4 viewDirs[] =
-		{
+		FMatrix4x4 viewDirs[] = {
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(1.0F, 0.0F, 0.0F), FVector3(0.0F, -1.0F, 0.0F)),
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(-1.0F, 0.0F, 0.0F), FVector3(0.0F, -1.0F, 0.0F)),
 			CreateMatrix::LookAt(FVector3(0.0F, 0.0F, 0.0F), FVector3(0.0F, 1.0F, 0.0F), FVector3(0.0F, 0.0F, 1.0F)),
@@ -660,12 +597,10 @@ namespace Scene
 		environmentMap.Bind(0);
 
 		unsigned int maxMipLevels = 5;
-		for (unsigned int i = 0; i < 6; ++i)
-		{
+		for (unsigned int i = 0; i < 6; ++i) {
 			Shader::LoadMatrix4x4(0, projection * viewDirs[i]);
 
-			for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
-			{
+			for (unsigned int mip = 0; mip < maxMipLevels; ++mip) {
 				unsigned int size = static_cast<unsigned int>(128.0 * pow(0.5, mip));
 				glViewport(0, 0, size, size);
 

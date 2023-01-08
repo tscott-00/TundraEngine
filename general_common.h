@@ -86,11 +86,9 @@ void GenerateF32Normal(float* output, size_t outputLength, uint64_t* seed);
 void GenerateF64Normal(double* output, size_t outputLength, uint64_t* seed);
 
 template<class T>
-void RemoveVectorComponent(std::vector<T>& list, const T& component)
-{
+void RemoveVectorComponent(std::vector<T>& list, const T& component) {
 	for (size_t i = 0; i < list.size(); ++i)
-		if (list[i] == component)
-		{
+		if (list[i] == component) {
 			list[i] = list[list.size() - 1];
 			list.pop_back();
 			break;
@@ -98,16 +96,13 @@ void RemoveVectorComponent(std::vector<T>& list, const T& component)
 }
 
 template<class T>
-class RequestList
-{
+class RequestList {
 private:
-	struct Request
-	{
+	struct Request {
 		T val;
 		bool isAdd;
 
-		Request(const T& val, bool isAdd)
-		{
+		Request(const T& val, bool isAdd) {
 			this->val = val;
 			this->isAdd = isAdd;
 		}
@@ -116,46 +111,37 @@ private:
 	std::list<T> list;
 	std::list<Request> requests;
 public:
-	void Add(const T& val)
-	{
+	void Add(const T& val) {
 		requests.push_back(Request(val, true));
 	}
 
-	void Remove(const T& val)
-	{
+	void Remove(const T& val) {
 		requests.push_back(Request(val, false));
 	}
 
-	inline auto begin()
-	{
+	inline auto begin() {
 		return list.begin();
 	}
 
-	inline const auto begin() const
-	{
+	inline const auto begin() const {
 		return list.begin();
 	}
 
-	inline auto end()
-	{
+	inline auto end() {
 		return list.end();
 	}
 
-	inline const auto end() const
-	{
+	inline const auto end() const {
 		return list.end();
 	}
 
-	void Clear()
-	{
+	void Clear(){
 		list.clear();
 		requests.clear();
 	}
 
-	void ProcessRequests()
-	{
-		for (const Request& r : requests)
-		{
+	void ProcessRequests() {
+		for (const Request& r : requests) {
 			if (r.isAdd)
 				list.push_back(r.val);
 			else
@@ -173,14 +159,11 @@ public:
 // TODO: If sizeof(Section) == alignof(Section) (or even maybe sizeof(Slice) * 64 ==  alignof(Section)) then reinterpret_cast<Section*>(obj) = section
 // TODO B = 8 or alig
 
-namespace CT
-{
-	constexpr size_t CoverageLog2(size_t n)
-	{
+namespace CT {
+	constexpr size_t CoverageLog2(size_t n) {
 		float current = static_cast<float>(n);
 		size_t result = 1;
-		while (current > 2.0F)
-		{
+		while (current > 2.0F) {
 			current *= 0.5F;
 			++result;
 		}
@@ -190,19 +173,15 @@ namespace CT
 }
 
 template<class T>
-class MemoryPool
-{
+class MemoryPool {
 	static_assert(UINT64_C(0b1) << CT::CoverageLog2(sizeof(T) * UINT64_C(64)) <= 8192, "T is too large to be poooled");
 private:
-	struct alignas(UINT64_C(0b1) << CT::CoverageLog2(sizeof(T) * UINT64_C(64))) Section
-	{
-		struct Slice
-		{
+	struct alignas(UINT64_C(0b1) << CT::CoverageLog2(sizeof(T) * UINT64_C(64))) Section {
+		struct Slice {
 			alignas(alignof(T)) uint8_t memory[sizeof(T)];
 
 			Slice() :
-				memory()
-			{ }
+				memory() { }
 
 			no_transfer_functions(Slice)
 		};
@@ -216,31 +195,22 @@ private:
 		Section(size_t chainIndex) :
 			chainIndex(chainIndex),
 			availabilityMap(0b1111111111111111111111111111111111111111111111111111111111111111),
-			nextSection(nullptr)
-		{ }
+			nextSection(nullptr) { }
 
-		T* LocateNextObject(uint8_t startIndex)
-		{
+		T* LocateNextObject(uint8_t startIndex) {
 			for (uint8_t i = startIndex; i < UINT8_C(64); ++i)
 				if (((availabilityMap >> i) & 0b1) == 0)
-				{
 					return reinterpret_cast<T*>(&slices[i]);
-				}
 
-			if (nextSection != nullptr)
-				return nextSection->LocateNextObject(0);
-			else
-				return nullptr;
+			return nextSection != nullptr ? nextSection->LocateNextObject(0) : nullptr;
 		}
 
-		void* operator new(size_t i)
-		{
+		void* operator new(size_t i) {
 			return aligned_alloc(i, UINT64_C(0b1) << CT::CoverageLog2(sizeof(T) * UINT64_C(64)));
 			//return _aligned_malloc(i, alignof(Section));
 		}
 
-		void operator delete(void* p)
-		{
+		void operator delete(void* p) {
 			std::free(p);
 			//_aligned_free(p);
 		}
@@ -251,8 +221,7 @@ private:
 	std::unique_ptr<Section> first;
 	Section* nextAvailable;
 public:
-	class Iterator
-	{
+	class Iterator {
 	private:
 		T* obj;
 	public:
@@ -260,10 +229,8 @@ public:
 			obj(obj)
 		{ }
 
-		Iterator& operator++()
-		{
-			if (obj)
-			{
+		Iterator& operator++() {
+			if (obj) {
 				Section* section = reinterpret_cast<Section*>(reinterpret_cast<intptr_t>(obj) / alignof(Section) * alignof(Section));
 				obj = section->LocateNextObject(static_cast<uint8_t>(obj - reinterpret_cast<T*>(&section->slices[0]) + 1));
 			}
@@ -271,21 +238,18 @@ public:
 			return *this;
 		}
 
-		Iterator operator++(int)
-		{
+		Iterator operator++(int) {
 			Iterator iterator = *this;
 			++*this;
 
 			return *this;
 		}
 		
-		bool operator!=(const Iterator& iterator)
-		{
+		bool operator!=(const Iterator& iterator) {
 			return obj != iterator.obj;
 		}
 
-		T* operator*()
-		{
+		T* operator*() {
 			return obj;
 		}
 	};
@@ -295,29 +259,22 @@ public:
 		nextAvailable(first.get())
 	{ }
 
-	~MemoryPool()
-	{
+	~MemoryPool() {
 		for (T* obj : *this)
 			obj->~T();
 	}
 
 	template<typename... Args>
-	T* alloc(Args... args)
-	{
-		for (uint8_t i = 0; i < UINT8_C(64); ++i)
-		{
-			if (((nextAvailable->availabilityMap >> i) & 0b1) == 1)
-			{
+	T* alloc(Args... args) {
+		for (uint8_t i = 0; i < UINT8_C(64); ++i) {
+			if (((nextAvailable->availabilityMap >> i) & 0b1) == 1) {
 				T* obj = new (&nextAvailable->slices[i].memory[0]) T(std::forward<Args>(args)...);
 
 				nextAvailable->availabilityMap = ~(~nextAvailable->availabilityMap | (UINT64_C(0b1) << i));
-				if (nextAvailable->availabilityMap == 0)
-				{
+				if (nextAvailable->availabilityMap == 0) {
 					Section* search = nextAvailable;
-					while (true)
-					{
-						if (search->nextSection == nullptr)
-						{
+					while (true) {
+						if (search->nextSection == nullptr) {
 							search->nextSection = std::unique_ptr<Section>(new Section(search->chainIndex + 1));
 							nextAvailable = search->nextSection.get();
 
@@ -326,8 +283,7 @@ public:
 
 						search = search->nextSection.get();
 
-						if (search->availabilityMap != 0)
-						{
+						if (search->availabilityMap != 0) {
 							nextAvailable = search;
 
 							return obj;
@@ -344,8 +300,7 @@ public:
 		return nullptr;
 	}
 
-	void free(T* obj)
-	{
+	void free(T* obj) {
 		obj->~T();
 
 		Section* section = reinterpret_cast<Section*>(reinterpret_cast<intptr_t>(reinterpret_cast<unsigned char*>(obj)) / alignof(Section) * alignof(Section));
@@ -356,8 +311,7 @@ public:
 			nextAvailable = section;
 	}
 
-	void clear()
-	{
+	void clear() {
 		for (T* obj : *this)
 			obj->~T();
 
@@ -365,328 +319,13 @@ public:
 		nextAvailable = first.get();
 	}
 
-	Iterator begin()
-	{
+	Iterator begin() {
 		return Iterator(first->LocateNextObject(0));
 	}
 
-	Iterator end()
-	{
+	Iterator end() {
 		return Iterator(nullptr);
 	}
 
 	no_transfer_functions(MemoryPool)
 };
-
-//#include <bitset>
-
-// B is base type (if child classes are used, and there are not all deallocated with free(), then this destructor must be virtual) M is memory slice size, and A is maximum alignment allowed for stored data types.
-//pow(2.0, ceil(log(S * 64.0) / log(2.0)))
-/*template<class B, size_t S = sizeof(B), size_t A = (8 >= alignof(B) ? 8 : alignof(B))>
-class VirtualMemoryPool
-{
-	static_assert(S > 0, "S must be larger than 0");
-	static_assert(0b1ui64 << CT::CoverageLog2(S * 64ui64) <= 8192, "S is too large to be poooled");
-private:
-	struct alignas(0b1ui64 << CT::CoverageLog2(S * 64ui64)) Section
-	{
-		struct Slice
-		{
-			alignas(A) unsigned __int8 memory[S];
-
-			Slice() { }
-
-			no_transfer_functions(Slice)
-		};
-
-		static_assert(S == sizeof(Slice), "sizeof(Slice) != S");
-
-		Slice slices[64];
-		// TODO: chainIndex should probably be size_t
-		size_t chainIndex;
-		uint64_t availabilityMap;
-		uint64_t tailMap;
-		std::unique_ptr<Section> nextSection;
-		Section* previousSection;
-
-		Section(size_t chainIndex) :
-			chainIndex(chainIndex),
-			availabilityMap(0b1111111111111111111111111111111111111111111111111111111111111111),
-			tailMap(0),
-			nextSection(nullptr),
-			previousSection(nullptr)
-		{ }
-
-		Slice* LocateNextObject(unsigned __int8 startIndex)
-		{
-			for (unsigned __int8 i = startIndex; i < 64ui8; ++i)
-				if (((tailMap >> i) & 0b1) == 1)
-					return &slices[i];
-
-			if (nextSection != nullptr)
-				return nextSection->LocateNextObject(0);
-			else
-				return nullptr;
-		}
-
-		// TODO: Can use for reverse iterator
-		/*Slice* LocatePreviousObject(unsigned __int8 startIndex)
-		{
-		for (unsigned __int8 i1 = startIndex + 1; i1 > 0; --i1)
-		{
-		unsigned __int8 = i - 1ui8;
-		if ((tailMap >> i) & 0b1 == 1)
-		return slices[i];
-		}
-
-		if (previousSection != nullptr)
-		return previousSection->LocatePreviousObject(63);
-		else
-		return nullptr;
-		}*//*
-
-		Slice* AllocateAvailableSlice(unsigned __int8 requiredUnits)
-		{
-			unsigned __int8 unitCount = 0;
-			unsigned __int8 startBit = 0;
-			Slice* currentSlice = nullptr;
-
-			for (unsigned __int8 i = 0; i < 64ui8; ++i)
-			{
-				if (((availabilityMap >> i) & 0b1) == 1)
-				{
-					if (unitCount == 0)
-					{
-						currentSlice = &slices[i];
-						startBit = i;
-					}
-					++unitCount;
-					if (unitCount == requiredUnits)
-					{
-						// TODO: Could probably do this without the loop
-						for (unsigned __int8 i = 0; i < requiredUnits; ++i)
-							availabilityMap = ~((~availabilityMap) | (0b1ui64 << (i + startBit)));
-						tailMap = tailMap | (0b1ui64 << startBit);
-
-						return currentSlice;
-					}
-				}
-				else
-					unitCount = 0;
-			}
-
-			return nullptr;
-		}
-
-		void FreeSlice(unsigned __int8 startUnit, unsigned __int8 requiredUnits)
-		{
-			for (unsigned __int8 i = 0; i < requiredUnits; ++i)
-				availabilityMap = availabilityMap | (0b1ui64 << (i + startUnit));
-			tailMap = ~(~tailMap | (0b1ui64 << startUnit));
-		}
-
-		Section& GetNextSection()
-		{
-			if (nextSection == nullptr)
-			{
-				nextSection = std::unique_ptr<Section>(new Section(chainIndex + 1));
-				nextSection->previousSection = this;
-			}
-
-			return *nextSection;
-		}
-
-		void* operator new(size_t i)
-		{
-			return _aligned_malloc(i, alignof(Section));
-		}
-
-		void operator delete(void* p)
-		{
-			_aligned_free(p);
-		}
-
-		no_transfer_functions(Section)
-	};
-
-	std::unique_ptr<Section> first;
-	Section* nextAvailable;
-public:
-	class Iterator
-	{
-	private:
-		typename Section::Slice* objTail;
-	public:
-		Iterator(typename Section::Slice* objTail) :
-			objTail(objTail)
-		{ }
-
-		Iterator& operator++()
-		{
-			if (objTail)
-			{
-				Section* section = reinterpret_cast<Section*>(reinterpret_cast<intptr_t>(objTail) / alignof(Section) * alignof(Section));
-				objTail = section->LocateNextObject(static_cast<unsigned __int8>(objTail - &section->slices[0] + 1));
-			}
-
-			return *this;
-		}
-
-		Iterator operator++(int)
-		{
-			Iterator iterator = *this;
-			++*this;
-
-			return *this;
-		}
-
-		bool operator!=(const Iterator& iterator)
-		{
-			return objTail != iterator.objTail;
-		}
-
-		B* operator*()
-		{
-			return reinterpret_cast<B*>(&objTail->memory[0]);
-		}
-	};
-
-	VirtualMemoryPool() :
-		first(new Section(0)),
-		nextAvailable(first.get())
-	{ }
-
-	~VirtualMemoryPool()
-	{
-		for (B* obj : *this)
-			obj->~B();
-	}
-
-	template<class T, typename... Args>
-	T* alloc(Args... args)
-	{
-		static_assert(sizeof(T) >= S, "sizeof(T) must be larger than 0");
-		static_assert(alignof(T) <= A, "alignof(T) must be less than or equal to A");
-		static_assert(sizeof(T) <= S * 64, "sizeof(T) must be less than or equal to sizeof(Slice) * 64 - sizeof(Slice*)");
-
-		unsigned __int8 requiredUnits = static_cast<unsigned __int8>(ceil(static_cast<double>(sizeof(T)) / S));
-
-		Section* section = nextAvailable;
-		while (true)
-		{
-			Section::Slice* test = nullptr;
-			if (test == nullptr)
-				test = nullptr;
-			Section::Slice* mem = section->AllocateAvailableSlice(requiredUnits);
-			if (mem != nullptr)
-			{
-				T* obj = new (&mem->memory[0]) T(std::forward<Args>(args)...);
-
-				if (section->availabilityMap == 0 && section == nextAvailable)
-				{
-					while (true)
-					{
-						section = &section->GetNextSection();
-						if (section->availabilityMap != 0)
-						{
-							nextAvailable = section;
-
-							return obj;
-						}
-					}
-				}
-
-				return obj;
-			}
-
-			section = &section->GetNextSection();
-		}
-
-		std::terminate();
-
-		return nullptr;
-	}
-
-	template<class T>
-	void free(T* obj)
-	{
-		obj->~T();
-
-		unsigned __int8 usedUnits = static_cast<unsigned __int8>(ceil(static_cast<double>(sizeof(T)) / S));
-
-		Section* section = reinterpret_cast<Section*>(reinterpret_cast<intptr_t>(obj) / alignof(Section) * alignof(Section));
-		section->FreeSlice(static_cast<unsigned __int8>(reinterpret_cast<typename Section::Slice*>(obj) - &section->slices[0]), usedUnits);
-
-		if (section->chainIndex < nextAvailable->chainIndex)
-			nextAvailable = section;
-	}
-
-	void clear()
-	{
-		for (B* obj : *this)
-		{
-			obj->~B();
-		}
-
-		first = std::unique_ptr<Section>(new Section(0));
-		nextAvailable = first.get();
-	}
-
-	Iterator begin()
-	{
-		return Iterator(first->LocateNextObject(0));
-	}
-
-	Iterator end()
-	{
-		return Iterator(nullptr);
-	}
-
-	no_transfer_functions(VirtualMemoryPool);
-};*/
-
-/*class Suspendable;
-
-class SuspendedState
-{
-	friend class Suspendable;
-private:
-	std::unordered_map<Suspendable*, void*> suspendedData;
-public:
-	SuspendedState() { }
-	~SuspendedState();
-};
-
-class Suspendable
-{
-private:
-	static std::list<Suspendable*> allSuspendable;
-public:
-	Suspendable();
-	virtual ~Suspendable();
-
-	virtual void* Suspend() = 0;
-	virtual void Resume(void* data) = 0;
-	virtual void Swap(void* data) = 0;
-	virtual void Deallocate(void* data) = 0;
-	
-	// TODO: Isn't safe if the same object is suspended twice
-	static void SuspendAll(SuspendedState& state);
-
-	template<class T>
-	static void SuspendSpecific(SuspendedState& state)
-	{
-		for (Suspendable* suspendable : allSuspendable)
-		{
-			if (dynamic_cast<T*>(suspendable))
-			{
-				if (state.suspendedData.find(suspendable) != state.suspendedData.end())
-					continue;
-				state.suspendedData[suspendable] = suspendable->Suspend();
-			}
-		}
-	}
-
-	static void Resume(SuspendedState& state);
-	static void Swap(SuspendedState& state);
-};*/

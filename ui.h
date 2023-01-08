@@ -7,21 +7,19 @@
 #include "shader.h"
 #include "mesh.h"
 
-class SpecialState
-{
+class SpecialState {
 public:
-	SpecialState() { }
+	SpecialState();
 
-	virtual void CPUStart() { }
-	virtual void CPUStop() { }
-	virtual void GPUStart() { }
-	virtual void GPUStop() { }
+	virtual void CPUStart();
+	virtual void CPUStop();
+	virtual void GPUStart();
+	virtual void GPUStop();
 };
 
-class Camera2 : public Component2, public SpecialState
-{
+class Camera2 : public Component2, public SpecialState {
 public:
-	Camera2() { }
+	Camera2();
 
 	void CPUStart() override;
 	void CPUStop() override;
@@ -34,91 +32,42 @@ public:
 #include "events_state.h"
 
 // TODO: Needs to update some sort of input bounds (CPU)
-class ScissorState : public SpecialState
-{
+class ScissorState : public SpecialState {
 protected:
 	GLint x, y;
 	GLsizei width, height;
 public:
-	ScissorState() :
-		x(0),
-		y(0),
-		width(EventsState::windowWidth),
-		height(EventsState::windowHeight)
-	{ }
+	ScissorState();
+	ScissorState(GLint x, GLint y, GLsizei width, GLsizei height);
 
-	ScissorState(GLint x, GLint y, GLsizei width, GLsizei height) :
-		x(x),
-		y(y),
-		width(width),
-		height(height)
-	{ }
-
-	void GPUStart() override
-	{
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(x, y, width, height);
-	}
-
-	void GPUStop() override
-	{
-		glDisable(GL_SCISSOR_TEST);
-	}
+	void GPUStart() override;
+	void GPUStop() override;
 };
 
-class ScissorStateComponent : public Component2, public SpecialState
-{
+class ScissorStateComponent : public Component2, public SpecialState {
 public:
-	ScissorStateComponent() { }
+	ScissorStateComponent();
 
-	void GPUStart() override
-	{
-		FVector3 llCorner = gameObject->transform.GetMatrix() * FVector3(-1.0F, -1.0F, 1.0F);
-		FVector3 urCorner = gameObject->transform.GetMatrix() * FVector3(1.0F, 1.0F, 1.0F);
-		int x0 = static_cast<int>((llCorner.x + 1.0F) * 0.5F * EventsState::windowWidth);
-		int y0 = static_cast<int>((llCorner.y + 1.0F) * 0.5F * EventsState::windowHeight);
-		int x1 = static_cast<int>((urCorner.x + 1.0F) * 0.5F * EventsState::windowWidth);
-		int y1 = static_cast<int>((urCorner.y + 1.0F) * 0.5F * EventsState::windowHeight);
-
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(x0, y0, x1 - x0, y1 - y0);
-	}
-
-	void GPUStop() override
-	{
-		glDisable(GL_SCISSOR_TEST);
-	}
+	void GPUStart() override;
+	void GPUStop() override;
 
 	can_copy(ScissorStateComponent);
 };
 
-class RenderComponent2 : public Component2
-{
+class RenderComponent2 : public Component2 {
 public:
 	static const FVector2 UNIT_UPPER_RIGHT, UNIT_UPPER_LEFT, UNIT_LOWER_LEFT, UNIT_LOWER_RIGHT;
 
 	FVector4 atlasTexInfo;
-
 	FColor color;
 	unsigned short quadCount;
 	// TODO: shared_ptr?
 	SpecialState* specialState;
 
 	RenderComponent2(const std::string& textureName, const FColor& color = FColor::WHITE, unsigned short quadCount = 1);
-	
-	RenderComponent2(const RenderComponent2& other) :
-		atlasTexInfo(other.atlasTexInfo),
-		color(other.color),
-		quadCount(other.quadCount),
-		specialState(other.specialState)
-	{ }
+	RenderComponent2(const RenderComponent2& other);
 
-	RenderComponent2* WithSpecialState(SpecialState* specialState)
-	{
-		this->specialState = specialState;
-
-		return this;
-	}
+	RenderComponent2* WithSpecialState(SpecialState* specialState);
 
 	void SetTexture(const std::string& textureName);
 
@@ -130,19 +79,13 @@ public:
 	can_copy(RenderComponent2)
 };
 
-class IndependentRenderComponent2 : public Component2
-{
+class IndependentRenderComponent2 : public Component2 {
 public:
 	Texture2D texture;
 	FColor color;
 
-	IndependentRenderComponent2(const Texture2D& texture, const FColor& color = FColor::WHITE) :
-		texture(texture),
-	    color(color) { }
-
-	IndependentRenderComponent2(const IndependentRenderComponent2& other) :
-		texture(other.texture),
-		color(other.color) { }
+	IndependentRenderComponent2(const Texture2D& texture, const FColor& color = FColor::WHITE);
+	IndependentRenderComponent2(const IndependentRenderComponent2& other);
 
 	void OnEnable() override;
 	void OnDisable() override;
@@ -150,31 +93,29 @@ public:
 	can_copy(IndependentRenderComponent2)
 };
 
-class UIComponent : public Component2
-{
+class UIComponent : public Component2 {
 public:
-	UIComponent() { }
+	UIComponent();
 
 	virtual bool ContainsPoint(float x, float y);
 
 	// Order of events:
 	// hover->click->release. Select and deselect are not guaranteed to occur in any particular order
-	virtual void OnHover(const GameTime& deltaTime) { }
-	virtual void OnClick(int button) { }
-	virtual void OnRelease(int button) { }
+	virtual void OnHover(const GameTime& deltaTime);
+	virtual void OnClick(int button);
+	virtual void OnRelease(int button);
 	// Component is selected when unselected and clicked on with any of the three mouse buttons. Component is deselected when selected and a click occurs elsewhere.
-	virtual void OnSelect() { }
-	virtual void OnDeselect() { }
+	virtual void OnSelect();
+	virtual void OnDeselect();
 
 	void OnEnable() override;
 	void OnDisable() override;
 };
 
-class MouseReleasingComponent2 : public Component2
-{
+class MouseReleasingComponent2 : public Component2 {
 public:
-	MouseReleasingComponent2() { }
-	MouseReleasingComponent2(MouseReleasingComponent2& other) { }
+	MouseReleasingComponent2();
+	MouseReleasingComponent2(MouseReleasingComponent2& other);
 
 	void OnEnable() override;
 	void OnDisable() override;
@@ -223,12 +164,9 @@ private:
 
 // TODO: This needs a better structure...
 // everything should probably just be in an TGameObjectsState singleton
-namespace Internal
-{
-	namespace Storage
-	{
-		struct GameObjects2
-		{
+namespace Internal {
+	namespace Storage {
+		struct GameObjects2 {
 			static Shader shader;
 			static Shader independentShader;
 
@@ -245,14 +183,10 @@ namespace Internal
 		};
 	}
 
-	namespace GameObjects2
-	{
+	namespace GameObjects2 {
 		void Init(unsigned int initialAtlasSize, bool pixelArt = false);
-
 		void Clear();
-
 		void Update(const GameTime& time);
-
 		void Render();
 	}
 }

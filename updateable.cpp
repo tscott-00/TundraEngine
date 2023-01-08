@@ -1,18 +1,19 @@
 #include "updateable.h"
 
+#include "general_common.h"
+
 #include <list>
 #include <unordered_map>
 
-namespace
-{
+Updateable::Updateable() { }
+
+namespace {
 	// TODO: Use general_common RequestList
-	struct ListRequest
-	{
+	struct ListRequest {
 		Updateable* object;
 		bool isAdd;
 
-		ListRequest(Updateable* object, bool isAdd)
-		{
+		ListRequest(Updateable* object, bool isAdd) {
 			this->object = object;
 			this->isAdd = isAdd;
 		}
@@ -23,30 +24,22 @@ namespace
 	std::list<ListRequest> listRequests;
 }
 
-void Updateable::EnableUpdates() const
-{
+void Updateable::EnableUpdates() const {
 	listRequests.push_back(ListRequest(const_cast<Updateable*>(this), true));
 }
 
-void Updateable::DisableUpdates() const
-{
+void Updateable::DisableUpdates() const {
 	listRequests.push_back(ListRequest(const_cast<Updateable*>(this), false));
 }
 
-namespace
-{
-	inline void ProcessRequests()
-	{
+namespace {
+	inline void ProcessRequests() {
 		// Adding and removing new/old objects
-		for (auto request : listRequests)
-		{
-			if (request.isAdd)
-			{
+		for (auto request : listRequests) {
+			if (request.isAdd) {
 				// TODO: add thing correctly
 				objects.push_back(request.object);
-			}
-			else
-			{
+			} else {
 				// TODO: find starting location of area, then iterate over that to find object (may go over if it can't be found, but that shouldn't be possible)
 				objects.remove(request.object);
 			}
@@ -55,42 +48,8 @@ namespace
 	}
 }
 
-namespace Internal
-{
-	/*namespace Storage
-	{
-		void* UpdateableManager::Suspender::Suspend()
-		{
-			ProcessRequests();
-
-			std::list<Updateable*> test(std::move(objects));
-			return new std::list<Updateable*>(std::move(objects));
-		}
-
-		void UpdateableManager::Suspender::Resume(void* data)
-		{
-			listRequests.clear();
-
-			objects = std::move(*reinterpret_cast<std::list<Updateable*>*>(data));
-			delete reinterpret_cast<std::list<Updateable*>*>(data);
-		}
-
-		void UpdateableManager::Suspender::Swap(void* data)
-		{
-			ProcessRequests();
-
-			std::list<Updateable*>& vec = *reinterpret_cast<std::list<Updateable*>*>(data);
-			std::swap(objects, vec);
-		}
-
-		void UpdateableManager::Suspender::Deallocate(void* data)
-		{
-			delete reinterpret_cast<std::list<Updateable*>*>(data);
-		}
-	}*/
-
-	void Update(const GameTime& time)
-	{
+namespace Internal {
+	void Update(const GameTime& time) {
 		ProcessRequests();
 
 		// Updating objects

@@ -17,8 +17,7 @@ BillboardParticleSystem::BillboardParticleSystem(const Texture2D& texture, Parti
 	texture(texture),
 	maxParticleCount(maxParticleCount),
 	fadeStart(fadeStart),
-	fadeEnd(fadeEnd)
-{
+	fadeEnd(fadeEnd) {
 	particleCount = maxParticleCount;
 
 	glGenBuffers(1, &particleSSBO);
@@ -27,19 +26,16 @@ BillboardParticleSystem::BillboardParticleSystem(const Texture2D& texture, Parti
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-BillboardParticleSystem::~BillboardParticleSystem()
-{
+BillboardParticleSystem::~BillboardParticleSystem() {
 	glDeleteBuffers(1, &particleSSBO);
 }
 
-void BillboardParticleSystem::OnEnable()
-{
+void BillboardParticleSystem::OnEnable() {
 	if (!Internal::Storage::Rendering::isDead)
 		dynamic_cast<BillboardParticleRenderProcess*>(Internal::Storage::RenderingObj::processRegistry["BillboardParticles"][0])->AddObject(this);
 }
 
-void BillboardParticleSystem::OnDisable()
-{
+void BillboardParticleSystem::OnDisable() {
 	if (!Internal::Storage::Rendering::isDead)
 		dynamic_cast<BillboardParticleRenderProcess*>(Internal::Storage::RenderingObj::processRegistry["BillboardParticles"][0])->RemoveObject(this);
 }
@@ -48,19 +44,16 @@ BillboardParticleRenderProcess::BillboardParticleRenderProcess() :
 	shader("Internal/Shaders/billboard_particles")
 { }
 
-void BillboardParticleRenderProcess::Run(const RMatrix4x4& projectionView, const Camera3* camera)
-{
+void BillboardParticleRenderProcess::Run(const RMatrix4x4& projectionView, const Camera3* camera) {
 	RMatrix4x4 myProjectionView;
 	// Still tests for depth, just doesn't write, so it will not work in a full scene with aux camera planes.
-	if (!isnan(auxCameraNear))
-	{
+	if (!isnan(auxCameraNear)) {
 		real oldNear = camera->GetZNear();
 		real oldFar = camera->GetZFar();
 		const_cast<Camera3*>(camera)->Adjust(auxCameraNear, auxCameraFar);
 		myProjectionView = camera->GetProjectionViewMatrix();
 		const_cast<Camera3*>(camera)->Adjust(oldNear, oldFar);
-	}
-	else
+	} else
 		myProjectionView = projectionView;
 
 	DVector3 camPos = camera->gameObject->transform.GetWorldPosition();
@@ -72,11 +65,9 @@ void BillboardParticleRenderProcess::Run(const RMatrix4x4& projectionView, const
 
 	shader.Bind();
 	Internal::Storage::Rendering::quadMesh.Bind();
-	for (auto pair : particleSystems)
-	{
+	for (auto pair : particleSystems) {
 		pair.first.Bind(0);
-		for (BillboardParticleSystem* system : pair.second)
-		{
+		for (BillboardParticleSystem* system : pair.second) {
 			Shader::LoadMatrix4x4(0, static_cast<FMatrix4x4>(myProjectionView * system->gameObject->transform.GetMatrix()));
 			Shader::LoadFloat(1, 1.0F / EventsState::GetAspectRatio());
 			Shader::LoadVector3(2, static_cast<FVector3>((camPos - system->gameObject->transform.GetWorldPosition())));
@@ -93,14 +84,12 @@ void BillboardParticleRenderProcess::Run(const RMatrix4x4& projectionView, const
 	glDisable(GL_BLEND);
 }
 
-void BillboardParticleRenderProcess::AddObject(BillboardParticleSystem* system)
-{
+void BillboardParticleRenderProcess::AddObject(BillboardParticleSystem* system) {
 	// TODO: Verify that Texture2D is working with the hashing
 	particleSystems[system->texture].push_back(system);
 }
 
-void BillboardParticleRenderProcess::RemoveObject(BillboardParticleSystem* system)
-{
+void BillboardParticleRenderProcess::RemoveObject(BillboardParticleSystem* system) {
 	std::list<BillboardParticleSystem*>& ls = particleSystems[system->texture];
 	ls.remove(system);
 	if (ls.empty())

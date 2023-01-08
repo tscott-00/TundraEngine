@@ -17,12 +17,9 @@ class ObjectRenderingProcess3;
 class RenderingPostProcess3;
 class DirectionalLightComponent3;
 
-namespace Internal
-{
-	namespace Storage
-	{
-		struct RenderingObj
-		{
+namespace Internal {
+	namespace Storage {
+		struct RenderingObj {
 			static std::unordered_map<std::string, std::vector<ObjectRenderingProcess3*>> processRegistry;
 			static std::vector<ObjectRenderingProcess3*> processes[2];
 			//static std::unordered_map<GLuint, std::list<TLight<T>*>> lights;
@@ -30,8 +27,7 @@ namespace Internal
 			static float exposure;
 		};
 
-		struct Rendering
-		{
+		struct Rendering {
 			static const unsigned int ENVIRONMENT_MAP_RESOLUTION;
 			static const unsigned int IRRADIANCE_MAP_RESOLUTION;
 			static const unsigned int PREFILTERED_ENVIRONMENT_MAP_RESOLUTION;
@@ -64,8 +60,7 @@ namespace Internal
 	}
 }
 
-class DirectionalLightComponent3 : public Component3
-{
+class DirectionalLightComponent3 : public Component3 {
 public:
 	FColor color;
 
@@ -78,8 +73,7 @@ public:
 	can_copy(DirectionalLightComponent3)
 };
 
-class Material3
-{
+class Material3 {
 public:
 	const std::vector<ObjectRenderingProcess3*>* process;
 
@@ -88,11 +82,9 @@ public:
 
 class RenderComponent3;
 
-class ObjectRenderingProcess3 //: public Suspendable
-{
+class ObjectRenderingProcess3 {
 public:
-	enum Type
-	{
+	enum Type {
 		OPAQUE,
 		INFLUENCED,
 
@@ -113,8 +105,7 @@ public:
 	no_transfer_functions(ObjectRenderingProcess3);
 };
 
-struct ObjectCollection
-{
+struct ObjectCollection {
 	std::vector<Transform3*> objects;
 	GLuint attributeSSBO; // 0 if it is not to be instanced!
 	GLsizei attributeSSBOByteCapacity;
@@ -125,16 +116,14 @@ struct ObjectCollection
 
 	void RefreshSSBO(const void* data, GLsizei dataBytes/*TODO: Add oversize back?, GLsizei oversizeInBytes*/);
 
-	inline void Bind() const
-	{
+	inline void Bind() const {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, attributeSSBO);
 	}
 
 	ObjectCollection& operator=(ObjectCollection&& other);
 };
 
-class RenderComponent3 : public Component3
-{
+class RenderComponent3 : public Component3 {
 private:
 	Mesh mesh;
 	std::shared_ptr<Material3> material;
@@ -148,15 +137,13 @@ public:
 	void OnEnable() override;
 	void OnDisable() override;
 
-	inline const Mesh& GetMesh() const
-	{
+	inline const Mesh& GetMesh() const {
 		return mesh;
 	}
 
 	void SetMesh(const Mesh& mesh);
 
-	inline const Material3* GetMaterial() const
-	{
+	inline const Material3* GetMaterial() const {
 		return &*material;
 	}
 
@@ -168,16 +155,14 @@ public:
 	can_copy(RenderComponent3);
 };
 
-class RenderingOpaqueProcess3 : public ObjectRenderingProcess3
-{
+class RenderingOpaqueProcess3 : public ObjectRenderingProcess3 {
 public:
 	RenderingOpaqueProcess3();
 
 	virtual void Run(const RMatrix4x4& projectionView, const Camera3* camera) = 0;
 };
 
-class RenderingInfluencedProcess : public ObjectRenderingProcess3
-{
+class RenderingInfluencedProcess : public ObjectRenderingProcess3 {
 public:
 	GLint requestNum;
 
@@ -199,17 +184,14 @@ protected:
 	std::unordered_map<const Mesh*, std::unordered_map<const TMaterial3<T>*, std::list<T*>>> objects;*/
 };
 
-class RenderingPostProcess3
-{
+class RenderingPostProcess3 {
 public:
 	virtual ~RenderingPostProcess3();
 
 	virtual void Run() = 0;
 };
 
-// TODO: Move out of header file
-class SkyboxRenderingProcess3 : public RenderingOpaqueProcess3
-{
+class SkyboxRenderingProcess3 : public RenderingOpaqueProcess3 {
 private:
 	const Shader shader;
 public:
@@ -223,10 +205,8 @@ public:
 	void RemoveObject(const RenderComponent3& object) override { }
 };
 
-namespace Internal
-{
-	namespace Rendering
-	{
+namespace Internal {
+	namespace Rendering {
 		// TODO: Remove vector thing. Only needs to be a single process
 		void RegisterProcess(const std::string& name, const std::vector<ObjectRenderingProcess3*>& process);
 		void RegisterProcess(const std::string& name, RenderingPostProcess3* process);
@@ -244,10 +224,4 @@ namespace Scene
 	void ConductProbe(const Transform3& location, const Cubemap& environmentMap);
 	void ComputeIrradiance(const Cubemap& environmentMap, const Cubemap& irradianceMap);
 	void ComputePrefilteredEnvironmentMap(const Cubemap& environmentMap, const Cubemap& prefilteredEnvironmentMap);
-	
-	namespace Debug
-	{
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
 }

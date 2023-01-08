@@ -6,8 +6,7 @@
 
 #include "texture.h"
 
-class FBO
-{
+class FBO {
 private:
 	Texture2D* textures;
 	Texture2D depthTexture;
@@ -30,18 +29,15 @@ public:
 	void Bind() const;
 	void Unbind() const;
 
-	inline const Texture2D& GetTexture(unsigned int index) const
-	{
+	inline const Texture2D& GetTexture(unsigned int index) const {
 		return textures[index];
 	}
 
-	inline const Texture2D& GetDepthTexture() const
-	{
+	inline const Texture2D& GetDepthTexture() const {
 		return depthTexture;
 	}
 
-	inline const Texture2D& GetDepthStencilTexture() const
-	{
+	inline const Texture2D& GetDepthStencilTexture() const {
 		return depthStencilTexture;
 	}
 
@@ -50,38 +46,31 @@ public:
 	void AttachDepthBuffer();
 	void AttachDepthStencilBuffer();
 
-	inline void DrawBuffers(GLenum* buffers, int count)
-	{
+	inline void DrawBuffers(GLenum* buffers, int count) {
 		glDrawBuffers(count, buffers);
 	}
 
-	inline void DrawBuffers(GLenum buffer)
-	{
+	inline void DrawBuffers(GLenum buffer) {
 		glDrawBuffers(1, &buffer);
 	}
 
-	inline GLuint rtc_GetID() const
-	{
+	inline GLuint rtc_GetID() const {
 		return fbo;
 	}
 
-	inline GLuint rtc_GetDepthBuffer() const
-	{
+	inline GLuint rtc_GetDepthBuffer() const {
 		return depthBuffer;
 	}
 
-	inline const Texture2D& rtc_GetDepthTexture() const
-	{
+	inline const Texture2D& rtc_GetDepthTexture() const {
 		return depthTexture;
 	}
 
-	inline GLuint rtc_GetDepthStencilBuffer() const
-	{
+	inline GLuint rtc_GetDepthStencilBuffer() const {
 		return depthStencilBuffer;
 	}
 
-	inline const Texture2D& rtc_GetDepthStencilTexture() const
-	{
+	inline const Texture2D& rtc_GetDepthStencilTexture() const {
 		return depthStencilTexture;
 	}
 

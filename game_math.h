@@ -102,32 +102,27 @@ typedef TMatrix4x4<double> DMatrix4x4;
 typedef TMatrix4x4<real> RMatrix4x4;
 
 template<class T>
-TVector2<T> Normalize(const TVector2<T>& vector)
-{
+TVector2<T> Normalize(const TVector2<T>& vector) {
 	return glm::normalize(vector);
 }
 
 template<class T>
-TVector3<T> Normalize(const TVector3<T>& vector)
-{
+TVector3<T> Normalize(const TVector3<T>& vector) {
 	return glm::normalize(vector);
 }
 
 template<class T>
-TVector4<T> Normalize(const TVector4<T>& vector)
-{
+TVector4<T> Normalize(const TVector4<T>& vector) {
 	return glm::normalize(vector);
 }
 
 template<class T>
-TVector3<T> Cross(const TVector3<T>& vector0, const TVector3<T>& vector1)
-{
+TVector3<T> Cross(const TVector3<T>& vector0, const TVector3<T>& vector1) {
 	return glm::cross(vector0, vector1);
 }
 
 template<class T>
-TVector2<T> Transform(const TVector2<T>& position, const TMatrix3x3<T>& matrix)
-{
+TVector2<T> Transform(const TVector2<T>& position, const TMatrix3x3<T>& matrix) {
 	// (position, 1.0)
 	TVector3<T> temp(position.x, position.y, 1.0);
 	temp = matrix * temp;
@@ -136,8 +131,7 @@ TVector2<T> Transform(const TVector2<T>& position, const TMatrix3x3<T>& matrix)
 }
 
 template<class T>
-TVector3<T> Transform(const TVector3<T>& position, const TMatrix4x4<T>& matrix)
-{
+TVector3<T> Transform(const TVector3<T>& position, const TMatrix4x4<T>& matrix) {
 	// (position, 1.0)
 	TVector4<T> temp(position.x, position.y, position.z, 1.0);
 	temp = matrix * temp;
@@ -145,17 +139,14 @@ TVector3<T> Transform(const TVector3<T>& position, const TMatrix4x4<T>& matrix)
 	return TVector3<T>(temp.x, temp.y, temp.z);
 }
 
-namespace CreateMatrix
-{
+namespace CreateMatrix {
 	template<class T>
-	TMatrix4x4<T> Translation(const TVector3<T>& translation)
-	{
+	TMatrix4x4<T> Translation(const TVector3<T>& translation) {
 		return glm::translate(translation);
 	}
 
 	template<class T>
-	TMatrix2x2<T> Rotation2x2(T rotation)
-	{
+	TMatrix2x2<T> Rotation2x2(T rotation) {
 		TMatrix2x2<T> matrix;
 
 		T c = cos(rotation);
@@ -169,38 +160,32 @@ namespace CreateMatrix
 	}
 	
 	template<class T>
-	TMatrix3x3<T> Rotation3x3(const TQuaternion<T>& quat)
-	{
+	TMatrix3x3<T> Rotation3x3(const TQuaternion<T>& quat) {
 		return glm::toMat3(quat);
 	}
 
 	template<class T>
-	TMatrix4x4<T> Rotation4x4(const TQuaternion<T>& quat)
-	{
+	TMatrix4x4<T> Rotation4x4(const TQuaternion<T>& quat) {
 		return glm::toMat4(quat);
 	}
 
 	template<class T>
-	TMatrix4x4<T> Rotation(T angle, const TVector3<T>& axis)
-	{
+	TMatrix4x4<T> Rotation(T angle, const TVector3<T>& axis) {
 		return glm::rotate(angle, axis);
 	}
 
 	template<class T>
-	TMatrix4x4<T> Scale(const TVector3<T>& scale)
-	{
+	TMatrix4x4<T> Scale(const TVector3<T>& scale) {
 		return glm::scale(scale);
 	}
 
 	template<class T>
-	TMatrix4x4<T> Projection(T fov, T aspect, T zNear, T zFar)
-	{
+	TMatrix4x4<T> Projection(T fov, T aspect, T zNear, T zFar) {
 		return glm::perspective(glm::radians(fov), aspect, zNear, zFar);
 	}
 
 	template<class T>
-	TMatrix4x4<T> LookAt(const TVector3<T>& eye, const TVector3<T>& center, const TVector3<T>& up)
-	{
+	TMatrix4x4<T> LookAt(const TVector3<T>& eye, const TVector3<T>& center, const TVector3<T>& up) {
 		return glm::lookAt(eye, center, up);
 	}
 }
